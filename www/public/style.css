@@ -1,0 +1,20 @@
+.wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-width: 100wh;
+    min-height: 100vh;
+    margin: 0;
+    background-color: var(--background-color);
+}
+
+.login-container {
+    width: 100%;
+    max-width: 600px;
+    margin: 0;
+    padding: 2rem;
+}
+.login-container button[type="submit"],
+article {
+    margin: 0;
+}

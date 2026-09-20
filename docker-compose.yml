@@ -1,0 +1,28 @@
+services:
+  web:
+    build: .
+    ports:
+      - "8080:80"
+    depends_on:
+      - db
+    volumes:
+      - ./www:/var/www/html
+      - ./uploads:/var/www/html/uploads
+  db:
+    image: mysql:latest
+    environment:
+      MYSQL_USER: ruta9
+      MYSQL_PASSWORD: ruta9-pwd
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: ruta9
+    volumes:
+      - ./migrations:/docker-entrypoint-initdb.d
+  #   - ./.data:/var/lib/mysql
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    ports:
+      - "8083:80"
+    depends_on:
+      - db
+    environment:
+      PMA_HOST: db
