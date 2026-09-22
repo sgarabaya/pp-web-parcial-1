@@ -30,7 +30,7 @@ class User
         );
     }
     /**
-     * @return array<string,mixed>
+     * @return array<string>
      */
     public function mapTo(): array
     {

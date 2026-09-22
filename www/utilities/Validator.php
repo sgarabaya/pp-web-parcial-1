@@ -61,17 +61,6 @@ class Validator
         return $this;
     }
 
-    public function has_min_length(int $min): self
-    {
-        $value = $this->get_value();
-
-        if (!empty($value) && strlen((string) $value) < $min) {
-            $this->add_error("must be at least {$min} characters long");
-        }
-
-        return $this;
-    }
-
     public function has_max_length(int $max): self
     {
         $value = $this->get_value();
@@ -85,10 +74,7 @@ class Validator
 
     private function get_value(): mixed
     {
-        if ($this->currentField === null) {
-            return null;
-        }
-        return $this->data[$this->currentField] ?? null;
+        return $this->currentField ? $this->data[$this->currentField] : null;
     }
 
     private function add_error(string $message): void

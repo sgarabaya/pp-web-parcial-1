@@ -97,6 +97,29 @@ abstract class Repository
         $stmt = Database::connect()->prepare($query);
         return $stmt->execute($params);
     }
+
+    /** @param array $data */
+    public function updatePartial(string $id, array $data): bool
+    {
+        if (empty($data)) {
+            return false;
+        }
+
+        unset($data["id"]);
+
+        $fields = array_map(fn($k) => "$k = ?", array_keys($data));
+        $query = sprintf(
+            "UPDATE %s SET %s WHERE id = ?",
+            $this->getTableName(),
+            implode(", ", $fields),
+        );
+
+        $params = array_values($data);
+        $params[] = $id;
+
+        $stmt = Database::connect()->prepare($query);
+        return $stmt->execute($params);
+    }
 }
 
 ?>

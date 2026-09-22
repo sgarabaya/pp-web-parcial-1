@@ -1,10 +1,4 @@
 <?php
-
-function safe_get($request, $key)
-{
-    return isset($request[$key]) ? $request[$key] : null;
-}
-
 abstract class Api
 {
     public static function respond_json(mixed $obj, int $status = 200): void
@@ -39,8 +33,13 @@ abstract class Api
 
     public static function get_query_param(string $name): ?string
     {
-        return safe_get($_GET, $name);
+        return Api::safe_get($_GET, $name);
+    }
+
+    /** @param array $request */
+    public static function safe_get(array $request, string $key): ?string
+    {
+        return isset($request[$key]) ? $request[$key] : null;
     }
 }
-
 ?>

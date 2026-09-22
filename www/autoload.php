@@ -18,4 +18,7 @@ spl_autoload_register(function ($class) {
     }
 });
 
+//SIEMPRE tratamos de leer la sesion del usuario primero
+Auth::load();
+
 ?>

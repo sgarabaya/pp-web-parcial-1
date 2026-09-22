@@ -27,4 +27,9 @@ class UserRepository extends Repository
         $r = $this->findBy("email", $email);
         return count($r) > 0 ? $r[0] : null;
     }
+
+    public function updatePartial(string $id, array $data): bool
+    {
+        return parent::updatePartial($id, $data);
+    }
 }

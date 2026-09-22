@@ -7,7 +7,6 @@ services:
       - db
     volumes:
       - ./www:/var/www/html
-      - ./uploads:/var/www/html/uploads
   db:
     image: mysql:latest
     environment:
@@ -17,12 +16,3 @@ services:
       MYSQL_DATABASE: ruta9
     volumes:
       - ./migrations:/docker-entrypoint-initdb.d
-  #   - ./.data:/var/lib/mysql
-  phpmyadmin:
-    image: phpmyadmin/phpmyadmin
-    ports:
-      - "8083:80"
-    depends_on:
-      - db
-    environment:
-      PMA_HOST: db
