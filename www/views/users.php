@@ -58,9 +58,9 @@ usort($users, fn($a, $b) => get_role_prio($a) - get_role_prio($b));
                             <td><?= rolePill($user->role) ?></td>
                             <td class="actions">
                                 <a href="/views/edit_user.php?id=<?= $user->id ?>">
-                                    <img class="tiny" src="/public/edit.png"/>
+                                    <i data-lucide="square-pen"></i>
                                 </a>
-                                <img class="tiny" src="/public/trash.png" onclick="deleteUser('<?= $user->id ?>')"/>
+                                <a href="#" onclick="deleteUser('<?= $user->id ?>')"><i data-lucide="trash"></i></a>
                             </td>
                         </tr>
                         <?php } ?>

@@ -285,12 +285,8 @@ td.actions {
     gap: 1rem;
 }
 
-td.actions img {
-    cursor: pointer;
-}
-
-td.actions img:hover {
-    zoom: 110%;
+td.actions a {
+    color: var(--primary-text);
 }
 
 .table-container {
@@ -338,10 +334,6 @@ nav.sidebar {
     padding: 0.5rem;
     padding-left: 1rem;
     padding-right: 1rem;
-
-    img {
-        filter: invert(1);
-    }
 }
 
 .sidebar-entry.selected {
@@ -406,10 +398,6 @@ nav.sidebar a {
     justify-content: space-between;
     width: 100%;
     box-shadow: var(--shadow);
-}
-
-.logout img:hover {
-    zoom: 120%;
 }
 
 img.tiny {

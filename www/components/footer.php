@@ -29,5 +29,7 @@ d.addEventListener('DOMContentLoaded', () => {
 </script>
 <?php }
 ?>
+<script src="https://unpkg.com/lucide@latest"></script>
+<script> document.addEventListener('DOMContentLoaded', ()=> lucide.createIcons(lucide.Icons));</script>
 </body>
 </html>

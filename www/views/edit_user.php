@@ -85,7 +85,7 @@ if ($userId && !empty($userId)) {
         </fieldset>
         <footer class="flex-separate">
             <a class="button primary flex-separate" href="/views/users.php">
-                <img class="tiny" src="/public/back.svg"/>Volver
+                <i data-lucide="chevron-left"></i>Volver
             </a>
             <input type="submit" class="success" value="Guardar"/>
         </footer>

@@ -35,9 +35,9 @@ $vehiclesRepo = new VehicleRepository();
                             <td><?= $vehicle->stock ?></td>
                             <td class="actions">
                                 <a href="/views/edit_stock.php?id=<?= $vehicle->id ?>">
-                                    <img class="tiny" src="/public/edit.png"/>
+                                    <i data-lucide="square-pen"></i>
                                 </a>
-                                <img class="tiny" src="/public/trash.png" onclick="deleteVehicle('<?= $vehicle->id ?>')"/>
+                                <a href="#" onclick="deleteVehicle('<?= $vehicle->id ?>')"><i data-lucide="trash"></i></a>
                             </td>
                         </tr>
                         <?php } ?>
