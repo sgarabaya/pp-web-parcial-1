@@ -14,6 +14,12 @@ abstract class Repository
     /** @return array<string,mixed> */
     abstract protected function mapTo(object $obj): array;
 
+    /**
+     * Columnas para el partial update
+     * @return array
+     */
+    abstract protected function getColumns(): array;
+
     /** @return T|null */
     public function findById(string $id): ?object
     {
@@ -98,14 +104,25 @@ abstract class Repository
         return $stmt->execute($params);
     }
 
-    /** @param array $data */
-    public function updatePartial(string $id, array $data): bool
+    /** @param array $partialData */
+    public function updatePartial(string $id, array $partialData): bool
     {
-        if (empty($data)) {
+        if (empty($partialData)) {
             return false;
         }
 
-        unset($data["id"]);
+        $user = $this->findById($id);
+        if (!$user) {
+            return false; //User doesn't exist
+        }
+
+        $data = [];
+        $columns = $this->getColumns();
+        foreach ($partialData as $key => $value) {
+            if (in_array($key, $columns)) {
+                $data[$key] = $value;
+            }
+        }
 
         $fields = array_map(fn($k) => "$k = ?", array_keys($data));
         $query = sprintf(
@@ -115,7 +132,7 @@ abstract class Repository
         );
 
         $params = array_values($data);
-        $params[] = $id;
+        array_push($params, $id);
 
         $stmt = Database::connect()->prepare($query);
         return $stmt->execute($params);

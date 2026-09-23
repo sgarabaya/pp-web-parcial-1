@@ -28,6 +28,12 @@ class UserRepository extends Repository
         return count($r) > 0 ? $r[0] : null;
     }
 
+    #[\Override]
+    protected function getColumns(): array
+    {
+        return ["name", "last_name", "email", "password_hash", "role"];
+    }
+
     public function updatePartial(string $id, array $data): bool
     {
         return parent::updatePartial($id, $data);

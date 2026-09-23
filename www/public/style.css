@@ -66,10 +66,12 @@ body {
 /* Controls reset */
 
 button,
+a.button,
 input[type="text"],
 input[type="email"],
 input[type="password"],
 input[type="number"],
+input[type="submit"],
 select,
 textarea {
     font: inherit;
@@ -90,10 +92,26 @@ textarea {
     filter: brightness(120%);
 }
 
+input[disabled] {
+    color: gray;
+    filter: brightness(70%);
+}
+
 input[type="checkbox"],
 input[type="radio"] {
     margin: 0;
     cursor: pointer;
+}
+
+a.button,
+input[type="submit"],
+button {
+    cursor: pointer;
+    text-decoration: none;
+}
+
+dialog {
+    transition: 500ms;
 }
 
 button:hover {
@@ -126,6 +144,10 @@ button:hover {
     background-color: hsl(0, 50%, 40%);
     margin-bottom: 1rem;
     padding: 0.5rem;
+}
+
+.error-text {
+    color: hsl(0, 65%, 50%);
 }
 
 .less-bright {
@@ -166,6 +188,10 @@ button:hover {
     justify-content: center;
 }
 
+.hidden {
+    display: none;
+}
+
 /* Semantic Elements */
 
 dialog,
@@ -187,15 +213,16 @@ article {
         justify-content: space-between;
         margin-top: 1.5rem;
         filter: brightness(90%);
-        box-shadow: var(--shadow);
     }
 }
 
-dialog.secondary,
-article.secondary {
-    color: var(--secondary-text);
-    border: 1px solid var(--secondary-border);
-    background-color: var(--secondary-background);
+dialog {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    margin: 0;
+    border: 0;
 }
 
 fieldset {
@@ -211,6 +238,8 @@ fieldset {
 }
 
 main {
+    position: relative;
+
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -412,5 +441,86 @@ img.tiny {
 
     input {
         visibility: hidden;
+    }
+}
+
+/* Toast */
+
+#toast-container {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    z-index: 9999;
+}
+
+.toast {
+    position: relative;
+    overflow: hidden;
+    padding: 12px 24px;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    font-family: var(--font);
+    font-weight: bold;
+    opacity: 0;
+    transform: translateY(15px);
+    transition: var(--transition);
+    animation: toastFadeIn 0.5s forwards;
+}
+
+.toast.success {
+    background-color: var(--success);
+    border: 1px solid var(--success-border);
+    color: var(--success-text);
+}
+
+.toast.error {
+    background-color: hsl(0, 50%, 40%);
+    border: 1px solid hsl(0, 65%, 50%);
+    color: var(--body-text);
+}
+
+.toast.fade-out {
+    animation: toastFadeOut 0.5s forwards;
+}
+
+.toast-progress {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 4px;
+    width: 100%;
+    background-color: rgba(255, 0, 0, 0.25);
+    animation: progressShrink 3s linear forwards;
+}
+
+@keyframes progressShrink {
+    from {
+        left: 0;
+        width: 100%;
+    }
+    to {
+        left: 100%;
+        width: 0%;
+    }
+}
+
+@keyframes toastFadeOut {
+    from {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateY(15px);
+    }
+}
+
+@keyframes toastFadeIn {
+    to {
+        opacity: 1;
+        transform: translateY(0);
     }
 }

@@ -4,6 +4,7 @@ abstract class Auth
 {
     private static $userId;
     private static $userRole;
+    private static $userName;
 
     protected function __construct() {}
 
@@ -12,6 +13,12 @@ abstract class Auth
         session_start();
         self::$userId = Api::safe_get($_SESSION, "user.id");
         self::$userRole = Api::safe_get($_SESSION, "user.role");
+        self::$userName = Api::safe_get($_SESSION, "user.name");
+    }
+
+    public static function getName(): string
+    {
+        return self::$userName;
     }
 
     private static function getRole(): ?string
@@ -19,11 +26,37 @@ abstract class Auth
         return Api::safe_get($_SESSION, "user.role");
     }
 
+    public static function login(): bool
+    {
+        $email = Api::safe_get($_POST, "email");
+        $password = Api::safe_get($_POST, "password");
+
+        if (!$email || !$password) {
+            return false;
+        }
+
+        $userRepo = new UserRepository();
+        $user = $userRepo->findByEmail($email);
+
+        if ($user && Crypto::passwordVerify($password, $user->passwordHash)) {
+            $_SESSION["user.id"] = $user->id;
+            $_SESSION["user.role"] = $user->role;
+            $_SESSION["user.name"] = sprintf(
+                "%s.%s",
+                substr($user->name, 0, 1),
+                $user->lastName,
+            );
+
+            return true;
+        }
+
+        return false;
+    }
+
     public static function requireRole(string $required_role): void
     {
         if (!self::$userId || !self::$userRole) {
-            header("Location: /login.php");
-            exit();
+            Api::redirect("/login.php");
         }
 
         if ($required_role === "ANY") {
@@ -33,9 +66,19 @@ abstract class Auth
             return; //El rol admin puede ver todo
         }
         if (self::$userRole !== $required_role) {
-            header("Location: /index.php");
-            exit();
+            Api::redirect("/index.php");
         }
+    }
+    public static function canSee(string $page): bool
+    {
+        $role = self::$userRole;
+
+        //Admin puede ver todo
+        if ($role === "ADMIN" || $page === "OVERVIEW") {
+            return true;
+        }
+
+        return $role === $page; //SALES, STOCK
     }
 
     public static function hasRole(string $role): bool

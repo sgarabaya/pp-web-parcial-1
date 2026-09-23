@@ -1,5 +1,6 @@
 <?php
 require_once "../autoload.php";
+Auth::requireRole("ADMIN");
 
 function validateUser(array $data, bool $isCreate = false): Validator
 {
@@ -33,19 +34,19 @@ function update()
 {
     $data = Api::get_request();
     if (empty($data)) {
-        Api::respond_json(["error" => Messages::bodyWasEmpty()], 400);
+        throw new Exception(message: Messages::bodyWasEmpty());
     }
 
     $validator = validateUser($data, isCreate: false);
     if (!$validator->is_valid()) {
-        Api::respond_json(["errors" => $validator->get_errors()], 400);
+        throw new Exception(message: implode('\n', $validator->get_errors()));
     }
 
     $userRepository = new UserRepository();
     if ($userRepository->updatePartial($data["id"], $data)) {
-        Api::respond_json(["message" => Messages::operationSuccessful()], 200);
+        Api::set_message(Messages::operationSuccessful(), "success");
     } else {
-        Api::respond_json(["error" => Messages::operationFailed()], 500);
+        throw new Exception(message: Messages::operationFailed());
     }
 }
 
@@ -53,12 +54,12 @@ function create()
 {
     $data = Api::get_request();
     if (empty($data)) {
-        Api::respond_json(["error" => Messages::bodyWasEmpty()], 400);
+        throw new Exception(message: Messages::bodyWasEmpty());
     }
 
     $validator = validateUser($data, isCreate: true);
     if (!$validator->is_valid()) {
-        Api::respond_json(["errors" => $validator->get_errors()], 400);
+        throw new Exception(message: implode('\n', $validator->get_errors()));
     }
 
     $userRepository = new UserRepository();
@@ -73,67 +74,50 @@ function create()
     );
 
     if ($userRepository->create($user)) {
-        Api::respond_json(["message" => Messages::operationSuccessful()], 200);
+        Api::set_message(Messages::operationSuccessful(), "success");
     } else {
-        Api::respond_json(["error" => Messages::operationFailed()], 500);
+        throw new Exception(message: Messages::operationFailed());
     }
 }
 
 function delete()
 {
-    $id = Api::get_query_param("id");
+    $id = Api::safe_get($_POST, "id");
 
     if (!$id || empty($id)) {
-        Api::respond_json(["error" => Messages::missingParameter("id")], 400);
-    }
-
-    $userRepository = new UserRepository();
-    if ($userRepository->delete((string) $id)) {
-        Api::respond_json(["message" => Messages::operationSuccessful()], 200);
+        throw new Exception(message: Messages::missingParameter("id"));
     } else {
-        Api::respond_json(["error" => Messages::operationFailed()], 500);
-    }
-}
-
-function get()
-{
-    $userRepository = new UserRepository();
-
-    $id = Api::get_query_param("id");
-    if ($id !== null && !empty($id)) {
-        $user = $userRepository->findById($id);
-        if ($user instanceof User) {
-            Api::respond_json($user->serialize());
+        $userRepository = new UserRepository();
+        if ($userRepository->delete((string) $id)) {
+            Api::set_message(Messages::operationSuccessful(), "success");
         } else {
-            Api::respond_json(["error" => Messages::notFound()], 404);
+            throw new Exception(message: Messages::missingParameter("id"));
         }
     }
+}
 
-    $email = Api::get_query_param("email");
-    if ($email !== null && !empty($email)) {
-        $user = $userRepository->findByEmail($email);
-        if ($user instanceof User) {
-            Api::respond_json($user->serialize());
-        } else {
-            Api::respond_json(["error" => Messages::notFound()], 404);
-        }
+try {
+    if ($_SERVER["REQUEST_METHOD"] !== "POST") {
+        throw new Exception(Messages::operationFailed());
     }
-    $users = array_map(fn($u) => $u->serialize(), $userRepository->findAll());
-    Api::respond_json($users);
+
+    // workaround porque HTML es estupido (por que no hay DELETE en form methods??)
+    $method = Api::safe_get($_POST, "METHOD");
+    switch ($method) {
+        case "POST":
+            create();
+            break;
+        case "PUT":
+            update();
+            break;
+        case "DELETE":
+            delete();
+            break;
+    }
+} catch (Exception $e) {
+    Api::set_error_message($e->getMessage());
+} finally {
+    Api::redirect("/views/users.php");
 }
 
-switch ($_SERVER["REQUEST_METHOD"]) {
-    case "GET":
-        get();
-        break;
-    case "POST":
-        create();
-        break;
-    case "PUT":
-        update();
-        break;
-    case "DELETE":
-        delete();
-        break;
-}
 ?>

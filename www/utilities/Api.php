@@ -1,11 +1,22 @@
 <?php
 abstract class Api
 {
-    public static function respond_json(mixed $obj, int $status = 200): void
+    public static function set_message(string $message, string $type): void
     {
-        http_response_code($status);
-        header("Content-Type: application/json; charset=utf-8");
-        die(json_encode($obj));
+        $_SESSION["message"] = $message;
+        $_SESSION["message_type"] = $type;
+    }
+
+    public static function set_error_message(string $message): void
+    {
+        $_SESSION["message"] = $message;
+        $_SESSION["message_type"] = "error";
+    }
+
+    public static function redirect(string $url): void
+    {
+        header("Location: $url");
+        exit();
     }
 
     public static function get_request(): mixed

@@ -45,5 +45,5 @@ VALUES
     (UUID(), 'Volkswagen', 'Golf', 2020, 24000.00, 10),
     (UUID(), 'Volkswagen', 'Passat', 2020, 25000.00, 10),
     (UUID(), 'Volkswagen', 'Polo', 2020, 18000.00, 10),
-    (UUID(), 'Volkswagen', 'Tiguan', 2022, 27000.00, 10),
+    (UUID(), 'Volkswagen', 'Tiguan', 2022, 27000.00, 10)
 ;
