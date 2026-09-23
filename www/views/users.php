@@ -35,36 +35,38 @@ $users = $userRepo->findAll();
 usort($users, fn($a, $b) => get_role_prio($a) - get_role_prio($b));
 ?>
 <main>
-    <article class="full-width">
+    <article class="full-width" style="max-height:100%">
         <header class="flex-separate">
             <h1>Empleados</h1>
             <a class="button primary" href="/views/edit_user.php">Crear Usuario</a>
         </header>
-        <table>
-            <thead>
-                <th>Nombre</th>
-                <th>Apellido</th>
-                <th>Email</th>
-                <th>Role</th>
-                <th>Acciones</th>
-            </thead>
-            <tbody>
-                <?php foreach ($users as $user) { ?>
-                    <tr>
-                        <td><?= $user->name ?></td>
-                        <td><?= $user->lastName ?></td>
-                        <td><?= $user->email ?></td>
-                        <td><?= rolePill($user->role) ?></td>
-                        <td class="actions">
-                            <a href="/views/edit_user.php?id=<?= $user->id ?>">
-                                <img class="tiny" src="/public/edit.png"/>
-                            </a>
-                            <img class="tiny" src="/public/trash.png" onclick="deleteUser('<?= $user->id ?>')"/>
-                        </td>
-                    </tr>
-                    <?php } ?>
-            </tbody>
-        </table>
+        <div class="table-container">
+            <table>
+                <thead>
+                    <th>Nombre</th>
+                    <th>Apellido</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th>Acciones</th>
+                </thead>
+                <tbody>
+                    <?php foreach ($users as $user) { ?>
+                        <tr>
+                            <td><?= $user->name ?></td>
+                            <td><?= $user->lastName ?></td>
+                            <td><?= $user->email ?></td>
+                            <td><?= rolePill($user->role) ?></td>
+                            <td class="actions">
+                                <a href="/views/edit_user.php?id=<?= $user->id ?>">
+                                    <img class="tiny" src="/public/edit.png"/>
+                                </a>
+                                <img class="tiny" src="/public/trash.png" onclick="deleteUser('<?= $user->id ?>')"/>
+                            </td>
+                        </tr>
+                        <?php } ?>
+                </tbody>
+            </table>
+        </div>
     </article>
     <dialog id="confirm-dialog">
         <header>

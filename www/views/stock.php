@@ -10,38 +10,40 @@ navbar("STOCK");
 $vehiclesRepo = new VehicleRepository();
 ?>
 <main>
-    <article class="full-width">
+    <article class="full-width"  style="max-height:100%">
         <header class="flex-separate">
             <h1>Inventario</h1>
             <a class="button primary" href="/views/edit_stock.php">Crear Vehiculo</a>
         </header>
-        <table>
-            <thead>
-                <th>Marca</th>
-                <th>Modelo</th>
-                <th>Año</th>
-                <th>Precio</th>
-                <th>Inventario</th>
-                <th>Acciones</th>
-            </thead>
-            <tbody>
-                <?php foreach ($vehiclesRepo->findAll() as $vehicle) { ?>
-                    <tr>
-                        <td><?= $vehicle->brand ?></td>
-                        <td><?= $vehicle->model ?></td>
-                        <td><?= $vehicle->year ?></td>
-                        <td>$<?= $vehicle->price ?></td>
-                        <td><?= $vehicle->stock ?></td>
-                        <td class="actions">
-                            <a href="/views/edit_stock.php?id=<?= $vehicle->id ?>">
-                                <img class="tiny" src="/public/edit.png"/>
-                            </a>
-                            <img class="tiny" src="/public/trash.png" onclick="deleteVehicle('<?= $vehicle->id ?>')"/>
-                        </td>
-                    </tr>
-                    <?php } ?>
-            </tbody>
-        </table>
+        <div class="table-container">
+            <table>
+                <thead>
+                    <th>Marca</th>
+                    <th>Modelo</th>
+                    <th>Año</th>
+                    <th>Precio</th>
+                    <th>Inventario</th>
+                    <th>Acciones</th>
+                </thead>
+                <tbody>
+                    <?php foreach ($vehiclesRepo->findAll() as $vehicle) { ?>
+                        <tr>
+                            <td><?= $vehicle->brand ?></td>
+                            <td><?= $vehicle->model ?></td>
+                            <td><?= $vehicle->year ?></td>
+                            <td>$<?= $vehicle->price ?></td>
+                            <td><?= $vehicle->stock ?></td>
+                            <td class="actions">
+                                <a href="/views/edit_stock.php?id=<?= $vehicle->id ?>">
+                                    <img class="tiny" src="/public/edit.png"/>
+                                </a>
+                                <img class="tiny" src="/public/trash.png" onclick="deleteVehicle('<?= $vehicle->id ?>')"/>
+                            </td>
+                        </tr>
+                        <?php } ?>
+                </tbody>
+            </table>
+        </div>
     </article>
     <dialog id="confirm-dialog">
         <header>

@@ -26,7 +26,7 @@ if ($id && !empty($id)) {
     <article style="min-width:600px">
     <header>
         <h2>
-            <? if($isUpdate): ?>Modificar<? else: ?>Crear<? endif ?> Inventario</h2>
+            <? if($isUpdate): ?>Modificar<? else: ?>Crear<? endif ?> Vehiculo</h2>
     </header>
     <form action="/actions/stock.php" method="POST">
         <input
