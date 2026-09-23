@@ -3,6 +3,11 @@ services:
     build: .
     ports:
       - "8080:80"
+    environment:
+      DB_HOST: db
+      DB_NAME: ruta9
+      DB_USER: root
+      DB_PWD: root
     depends_on:
       - db
     volumes:
