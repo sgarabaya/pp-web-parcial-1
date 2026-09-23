@@ -19,6 +19,8 @@
     --success-border: hsl(143 75% 25%);
     --success-text: hsl(143 75% 90%);
 
+    --error: hsl(0, 50%, 40%);
+
     --radius: 24px;
     --transition: all 0.2s ease-in-out;
     --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
@@ -139,6 +141,10 @@ button:hover {
     padding: 0.5rem;
 }
 
+.error {
+    background-color: hsl(0, 50%, 25%) !important;
+}
+
 .error-text {
     color: hsl(0, 65%, 50%);
 }
@@ -230,6 +236,17 @@ fieldset {
     }
 }
 
+.inline {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    gap: 0.5rem;
+}
+
+.inline * {
+    width: 100%;
+}
+
 main {
     position: relative;
 
@@ -244,7 +261,7 @@ main {
 }
 
 main > * {
-    max-width: 960px;
+    max-width: 1080px;
 }
 
 /* Table stuff */

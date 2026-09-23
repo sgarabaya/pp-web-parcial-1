@@ -1,7 +1,7 @@
 <?php
 require_once "../autoload.php";
 
-Auth::requireRole("STOCK");
+Auth::ensureLoggedIn(); //No hay un rol minimo aca
 
 require_once "../components/header.php";
 require_once "../components/navbar.php";
@@ -10,10 +10,12 @@ navbar("STOCK");
 $vehiclesRepo = new VehicleRepository();
 ?>
 <main>
-    <article class="full-width"  style="max-height:100%">
+    <article class="full-width" style="max-height:100%">
         <header class="flex-separate">
             <h1>Inventario</h1>
-            <a class="button primary" href="/views/edit_stock.php">Crear Vehiculo</a>
+            <?php if (Auth::canEdit("STOCK")): ?>
+            <a class="button primary" href="/views/edit_stock.php">Agregar Vehiculo</a>
+            <?php endif; ?>
         </header>
         <div class="table-container">
             <table>
@@ -27,17 +29,28 @@ $vehiclesRepo = new VehicleRepository();
                 </thead>
                 <tbody>
                     <?php foreach ($vehiclesRepo->findAll() as $vehicle) { ?>
-                        <tr>
+                        <?= $vehicle->stock > 0
+                            ? "<tr>"
+                            : '<tr class="error">' ?>
                             <td><?= $vehicle->brand ?></td>
                             <td><?= $vehicle->model ?></td>
                             <td><?= $vehicle->year ?></td>
                             <td>$<?= $vehicle->price ?></td>
                             <td><?= $vehicle->stock ?></td>
                             <td class="actions">
-                                <a href="/views/edit_stock.php?id=<?= $vehicle->id ?>">
-                                    <i data-lucide="square-pen"></i>
-                                </a>
-                                <a href="#" onclick="deleteVehicle('<?= $vehicle->id ?>')"><i data-lucide="trash"></i></a>
+                                <?php if (Auth::canEdit("SALES")): ?>
+                                    <a href="/views/create_sale.php?vehicle_id=<?= $vehicle->id ?>">
+                                        <i data-lucide="circle-dollar-sign" style="color:var(--success)"></i>
+                                    </a>
+                                <?php endif; ?>
+                                <?php if (Auth::canEdit("STOCK")): ?>
+                                    <a href="/views/edit_stock.php?id=<?= $vehicle->id ?>">
+                                        <i data-lucide="square-pen"></i>
+                                    </a>
+                                    <a href="#" onclick="deleteVehicle('<?= $vehicle->id ?>')">
+                                        <i data-lucide="trash" style="color:var(--error)"></i>
+                                    </a>
+                                <?php endif; ?>
                             </td>
                         </tr>
                         <?php } ?>

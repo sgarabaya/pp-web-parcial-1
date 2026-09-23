@@ -53,6 +53,13 @@ abstract class Auth
         return false;
     }
 
+    public static function ensureLoggedIn(): void
+    {
+        if (!self::$userId || !self::$userRole) {
+            Api::redirect("/login.php");
+        }
+    }
+
     public static function requireRole(string $required_role): void
     {
         if (!self::$userId || !self::$userRole) {
@@ -69,6 +76,7 @@ abstract class Auth
             Api::redirect("/index.php");
         }
     }
+
     public static function canSee(string $page): bool
     {
         $role = self::$userRole;
@@ -78,7 +86,23 @@ abstract class Auth
             return true;
         }
 
-        return $role === $page; //SALES, STOCK
+        if ($page === "USERS") {
+            return false;
+        }
+
+        return true;
+    }
+
+    public static function canEdit(string $obj): bool
+    {
+        $role = self::$userRole;
+
+        //Admin puede hacer todo
+        if ($role === "ADMIN") {
+            return true;
+        }
+
+        return $role === $obj;
     }
 
     public static function hasRole(string $role): bool

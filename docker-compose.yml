@@ -9,6 +9,8 @@ services:
       - ./www:/var/www/html
   db:
     image: mysql:latest
+    ports:
+      - "3306:3306"
     environment:
       MYSQL_USER: ruta9
       MYSQL_PASSWORD: ruta9-pwd

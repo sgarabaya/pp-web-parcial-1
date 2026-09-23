@@ -43,13 +43,5 @@ class User
             "created" => $this->created->format(DateTimeInterface::ATOM),
         ];
     }
-
-    /** @@return array<mixed> */
-    public function serialize(): array
-    {
-        $obj = $this->mapTo();
-        unset($obj["password_hash"]);
-        return $obj;
-    }
 }
 ?>

@@ -1,13 +1,13 @@
 <?php
-declare(strict_types=1);
 
-class Sale
+class SaleView
 {
     public function __construct(
         public string $id,
-        public string $userId,
-        public string $vehicleId,
+        public string $user,
+        public string $vehicle,
         public float $paidAmount,
+        public float $suggestedPrice,
         public string $clientName,
         public string $clientContact,
         public string $paymentMethod,
@@ -22,29 +22,15 @@ class Sale
     {
         return new self(
             id: $data["id"],
-            userId: $data["user_id"],
-            vehicleId: $data["vehicle_id"],
+            user: $data["user"],
+            vehicle: $data["vehicle"],
             paidAmount: (float) $data["paid_amount"],
+            suggestedPrice: (float) $data["suggested_price"],
             clientName: $data["client_name"],
             clientContact: $data["client_contact"],
             paymentMethod: $data["payment_method"],
             created: new DateTimeImmutable($data["created"]),
         );
-    }
-
-    /** @return array<string, mixed> */
-    public function mapTo(): array
-    {
-        return [
-            "id" => $this->id,
-            "user_id" => $this->userId,
-            "vehicle_id" => $this->vehicleId,
-            "paid_amount" => $this->paidAmount,
-            "client_name" => $this->clientName,
-            "client_contact" => $this->clientContact,
-            "payment_method" => $this->paymentMethod,
-            "created" => $this->created->format(DateTimeInterface::ATOM),
-        ];
     }
 }
 

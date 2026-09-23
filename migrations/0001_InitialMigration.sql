@@ -24,12 +24,15 @@ CREATE TABLE IF NOT EXISTS Vehicles (
 
 CREATE TABLE IF NOT EXISTS Sales (
     id VARCHAR(36) PRIMARY KEY,
-    employee_id VARCHAR(36) NOT NULL,
+    user_id VARCHAR(36) NOT NULL,
     vehicle_id VARCHAR(36) NOT NULL,
     paid_amount DECIMAL(10, 2) NOT NULL,
+    client_name VARCHAR(40) NOT NULL,
+    client_contact VARCHAR(40) NOT NULL,
+    payment_method VARCHAR(40) NOT NULL,
     created DATETIME DEFAULT CURRENT_TIMESTAMP,
 
-    CONSTRAINT fk_sale_employee FOREIGN KEY (employee_id) REFERENCES Users(id),
+    CONSTRAINT fk_sale_user FOREIGN KEY (user_id) REFERENCES Users(id),
     CONSTRAINT fk_sale_vehicle FOREIGN KEY (vehicle_id) REFERENCES Vehicles(id)
 );
 

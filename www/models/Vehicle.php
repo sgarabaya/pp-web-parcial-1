@@ -14,8 +14,6 @@ class Vehicle
     ) {}
 
     /**
-     * Creates an instance from an array.
-     *
      * @param array<string, mixed> $data
      * @return self
      */

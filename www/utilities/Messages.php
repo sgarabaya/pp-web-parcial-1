@@ -23,6 +23,12 @@ abstract class Messages
     {
         return "Payload invalido, el cuerpo no puede estar vacio";
     }
+
+    public static function doesntExist(string $what): string
+    {
+        return "El elemento requerido $what no existe";
+    }
+
     public static function missingParameter(string $name): string
     {
         return sprintf("Falta un parametro requerido: %s", $name);

@@ -1,0 +1,84 @@
+<?php
+
+/** @@extends Repository<Sale> */
+class SaleRepository extends Repository
+{
+    #[\Override]
+    protected function getTableName(): string
+    {
+        return "Sales";
+    }
+
+    #[\Override]
+    protected function getColumns(): array
+    {
+        return [
+            "user_id",
+            "vehicle_id",
+            "paid_amount",
+            "client_name",
+            "client_contact",
+            "payment_method",
+        ];
+    }
+
+    #[\Override]
+    protected function mapFrom(array $row): ?object
+    {
+        return Sale::mapFrom($row);
+    }
+
+    #[\Override]
+    protected function mapTo(object $obj): array
+    {
+        /** @var Sale $obj */
+        return $obj->mapTo();
+    }
+
+    public function registerSale(Sale $sale): void
+    {
+        $userRepo = new UserRepository();
+        $vehicleRepo = new VehicleRepository();
+
+        $user = $userRepo->findById($sale->userId);
+        $vehicle = $vehicleRepo->findById($sale->vehicleId);
+
+        if (!$user) {
+            throw new Exception(Messages::doesntExist("Vehiculo"));
+        }
+        if (!$vehicle) {
+            throw new Exception(Messages::doesntExist("Empleado"));
+        }
+
+        $conn = Database::connect();
+        $conn->beginTransaction();
+
+        $conn->commit();
+    }
+
+    //Fetch custom para poder ver todos los detalles
+    /** @@return SaleView[] */
+    public function fetchDetails(): array
+    {
+        $query = "SELECT
+            S.id,
+            CONCAT(U.name, ' ', U.last_name) AS `user`,
+            CONCAT(V.brand, ' ', V.model, ' (', V.year, ')') AS `vehicle`,
+            S.paid_amount,
+            V.price AS `suggested_price`,
+            S.client_name,
+            S.client_contact,
+            S.payment_method,
+            S.created
+        FROM Sales S
+        INNER JOIN Users U ON U.id = S.user_id
+        INNER JOIN Vehicles V ON V.id = S.vehicle_id
+        ;";
+
+        $stmt = Database::connect()->prepare($query);
+        $stmt->execute();
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        return array_map(fn($row) => SaleView::mapFrom((array) $row), $rows);
+    }
+}
