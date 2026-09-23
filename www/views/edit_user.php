@@ -70,9 +70,14 @@ if ($userId && !empty($userId)) {
         </fieldset>
         <fieldset>
             <select name="role" required >
-                <?php foreach ($roles as $roleName => $roleValue) {
-                    echo "<option value=\"$roleName\">$roleValue</option>";
-                } ?>
+                <?php foreach ($roles as $roleName => $roleValue) { ?>
+                    <option
+                        value="<?= $roleName ?>"
+                        <?= get($user, "role") === $roleName
+                            ? "selected"
+                            : "" ?>
+                    ><?= $roleValue ?></option>
+                <?php } ?>
                 </select>
         </fieldset>
         <fieldset>

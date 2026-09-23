@@ -26,6 +26,13 @@ function rolePill($role)
             break;
     }
 }
+function get_role_prio($user)
+{
+    return ["ADMIN" => 0, "STOCK" => 1, "SALES" => 2][$user->role];
+}
+
+$users = $userRepo->findAll();
+usort($users, fn($a, $b) => get_role_prio($a) - get_role_prio($b));
 ?>
 <main>
     <article class="full-width">
@@ -39,10 +46,10 @@ function rolePill($role)
                 <th>Apellido</th>
                 <th>Email</th>
                 <th>Role</th>
-                <th>Actions</th>
+                <th>Acciones</th>
             </thead>
             <tbody>
-                <?php foreach ($userRepo->findAll() as $user) { ?>
+                <?php foreach ($users as $user) { ?>
                     <tr>
                         <td><?= $user->name ?></td>
                         <td><?= $user->lastName ?></td>

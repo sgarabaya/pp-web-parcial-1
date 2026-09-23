@@ -31,6 +31,20 @@ class Vehicle
             created: new DateTimeImmutable($data["created"]),
         );
     }
+
+    /** @return array<string, mixed> */
+    public function mapTo(): array
+    {
+        return [
+            "id" => $this->id,
+            "brand" => $this->brand,
+            "model" => $this->model,
+            "year" => $this->year,
+            "price" => $this->price,
+            "stock" => $this->stock,
+            "created" => $this->created->format(DateTimeInterface::ATOM),
+        ];
+    }
 }
 
 ?>

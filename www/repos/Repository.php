@@ -84,26 +84,6 @@ abstract class Repository
         return $stmt->execute(array_values($row));
     }
 
-    public function update(object $obj): bool
-    {
-        $row = $this->mapTo($obj);
-        $id = $row["id"];
-        unset($row["id"]);
-
-        $fields = array_map(fn($k) => "$k = ?", array_keys($row));
-        $query = sprintf(
-            "UPDATE %s SET %s WHERE id = ?",
-            $this->getTableName(),
-            implode(", ", $fields),
-        );
-
-        $params = array_values($row);
-        $params[] = $id;
-
-        $stmt = Database::connect()->prepare($query);
-        return $stmt->execute($params);
-    }
-
     /** @param array $partialData */
     public function updatePartial(string $id, array $partialData): bool
     {

@@ -12,8 +12,8 @@ if ($message) { ?>
 const d = document;
 d.addEventListener('DOMContentLoaded', () => {
   const toast = d.createElement('div');
-  toast.className = 'toast <?= $message_type ?? "error" ?>';
-  toast.textContent = '<?= $message ?>';
+  toast.className = `toast <?= $message_type ?? "error" ?>`;
+  toast.textContent = `<?= $message ?>`;
 
   const progress = d.createElement('div');
   progress.className = 'toast-progress';

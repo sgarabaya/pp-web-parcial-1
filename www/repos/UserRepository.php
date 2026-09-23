@@ -10,6 +10,12 @@ class UserRepository extends Repository
     }
 
     #[\Override]
+    protected function getColumns(): array
+    {
+        return ["name", "last_name", "email", "password_hash", "role"];
+    }
+
+    #[\Override]
     protected function mapFrom(array $row): ?User
     {
         return User::mapFrom($row);
@@ -29,13 +35,15 @@ class UserRepository extends Repository
     }
 
     #[\Override]
-    protected function getColumns(): array
+    public function updatePartial(string $id, array $partialData): bool
     {
-        return ["name", "last_name", "email", "password_hash", "role"];
-    }
+        if (isset($partialData["password"])) {
+            $partialData["password_hash"] = Crypto::passwordHash(
+                $partialData["password"],
+            );
+            unset($partialData["password"]);
+        }
 
-    public function updatePartial(string $id, array $data): bool
-    {
-        return parent::updatePartial($id, $data);
+        return parent::updatePartial($id, $partialData);
     }
 }

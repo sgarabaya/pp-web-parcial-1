@@ -67,11 +67,7 @@ body {
 
 button,
 a.button,
-input[type="text"],
-input[type="email"],
-input[type="password"],
-input[type="number"],
-input[type="submit"],
+input,
 select,
 textarea {
     font: inherit;
@@ -82,10 +78,7 @@ textarea {
     transition: var(--transition);
     outline: none;
 }
-input[type="text"],
-input[type="email"],
-input[type="password"],
-input[type="number"],
+input,
 select,
 textarea {
     background-color: var(--controls-background);

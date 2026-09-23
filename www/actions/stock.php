@@ -1,31 +1,27 @@
 <?php
 require_once "../autoload.php";
-Auth::requireRole("ADMIN");
+Auth::requireRole("STOCK");
 
-function validateUser(array $data, bool $isCreate = false): Validator
+function validate(array $data, bool $isCreate = false): Validator
 {
     $validator = new Validator($data);
 
     if ($isCreate) {
-        $validator->field("name")->is_required();
-        $validator->field("last_name")->is_required();
-        $validator->field("email")->is_required();
-        $validator->field("password")->is_required();
-        $validator->field("role")->is_required();
+        $validator->field("model")->is_required();
+        $validator->field("brand")->is_required();
+        $validator->field("year")->is_required();
+        $validator->field("price")->is_required();
+        $validator->field("stock")->is_required();
     } else {
-        //Si estamos actualizando el usuario, el id es obligatorio
+        //Si estamos actualizando el id es obligatorio
         $validator->field("id")->is_required();
     }
 
-    $validator->field("name")->has_max_length(40);
-    $validator->field("last_name")->has_max_length(40);
-    $validator->field("email")->is_email()->has_max_length(40);
-    $validator
-        ->field("role")
-        ->custom(
-            fn($v) => in_array($v, ["ADMIN", "STOCK", "SALES"]),
-            Messages::roleCanBe(),
-        );
+    $validator->field("model")->has_max_length(40);
+    $validator->field("brand")->has_max_length(40);
+    $validator->field("year")->is_int();
+    $validator->field("price")->is_numeric();
+    $validator->field("stock")->is_int();
 
     return $validator;
 }
@@ -37,13 +33,13 @@ function update()
         throw new Exception(message: Messages::bodyWasEmpty());
     }
 
-    $validator = validateUser($data, isCreate: false);
+    $validator = validate($data, isCreate: false);
     if (!$validator->is_valid()) {
         throw new Exception(message: $validator->get_errors_as_string());
     }
 
-    $userRepository = new UserRepository();
-    if ($userRepository->updatePartial($data["id"], $data)) {
+    $vehicleRepository = new VehicleRepository();
+    if ($vehicleRepository->updatePartial($data["id"], $data)) {
         Api::set_message(Messages::operationSuccessful(), "success");
     } else {
         throw new Exception(message: Messages::operationFailed());
@@ -57,23 +53,23 @@ function create()
         throw new Exception(message: Messages::bodyWasEmpty());
     }
 
-    $validator = validateUser($data, isCreate: true);
+    $validator = validate($data, isCreate: true);
     if (!$validator->is_valid()) {
         throw new Exception(message: $validator->get_errors_as_string());
     }
 
-    $userRepository = new UserRepository();
-    $user = new User(
+    $vehicleRepository = new VehicleRepository();
+    $vehicle = new Vehicle(
         id: Crypto::uuid4(),
-        name: $data["name"],
-        lastName: $data["last_name"],
-        email: $data["email"],
-        role: $data["role"],
-        passwordHash: Crypto::passwordHash($data["password"]),
+        brand: $data["brand"],
+        model: $data["model"],
+        price: $data["price"],
+        stock: $data["stock"],
+        year: $data["year"],
         created: new DateTimeImmutable(datetime: "now"),
     );
 
-    if ($userRepository->create($user)) {
+    if ($vehicleRepository->create($vehicle)) {
         Api::set_message(Messages::operationSuccessful(), "success");
     } else {
         throw new Exception(message: Messages::operationFailed());
@@ -87,8 +83,8 @@ function delete()
     if (!$id || empty($id)) {
         throw new Exception(message: Messages::missingParameter("id"));
     } else {
-        $userRepository = new UserRepository();
-        if ($userRepository->delete((string) $id)) {
+        $repository = new VehicleRepository();
+        if ($repository->delete((string) $id)) {
             Api::set_message(Messages::operationSuccessful(), "success");
         } else {
             throw new Exception(message: Messages::missingParameter("id"));
@@ -117,7 +113,7 @@ try {
 } catch (Exception $e) {
     Api::set_error_message($e->getMessage());
 } finally {
-    Api::redirect("/views/users.php");
+    Api::redirect("/views/stock.php");
 }
 
 ?>

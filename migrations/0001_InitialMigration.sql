@@ -4,9 +4,9 @@ USE ruta9;
 
 CREATE TABLE IF NOT EXISTS Users (
     id VARCHAR(36) PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
-    last_name VARCHAR(255) NOT NULL,
-    email VARCHAR(255) UNIQUE NOT NULL,
+    name VARCHAR(40) NOT NULL,
+    last_name VARCHAR(40) NOT NULL,
+    email VARCHAR(40) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
     role ENUM('ADMIN', 'STOCK', 'SALES') NOT NULL DEFAULT 'SALES',
     created DATETIME DEFAULT CURRENT_TIMESTAMP
@@ -14,8 +14,8 @@ CREATE TABLE IF NOT EXISTS Users (
 
 CREATE TABLE IF NOT EXISTS Vehicles (
     id VARCHAR(36) PRIMARY KEY,
-    brand VARCHAR(255) NOT NULL,
-    model VARCHAR(255) NOT NULL,
+    brand VARCHAR(40) NOT NULL,
+    model VARCHAR(40) NOT NULL,
     year INT NOT NULL,
     price DECIMAL(10, 2) NOT NULL,
     stock INT NOT NULL DEFAULT 0,
@@ -37,5 +37,5 @@ INSERT IGNORE INTO Users
     (id, name, last_name, email, role, password_hash)
 VALUES
     /* pwd:admin */
-    ('00000000-0000-0000-0000-000000000000', 'System', 'Administrator', 'admin@ruta9.ar', 'ADMIN', '$argon2id$v=19$m=65536,t=4,p=1$VUk4N0wzZFFRVzdWVWFGSQ$/p3Q4GJiSzyJqV9kX/08av6TxfDGTBnsKLRTgqXWFwg')
+    ('00000000-0000-0000-0000-000000000000', '-', 'Administrator', 'admin@ruta9.ar', 'ADMIN', '$argon2id$v=19$m=65536,t=4,p=1$VUk4N0wzZFFRVzdWVWFGSQ$/p3Q4GJiSzyJqV9kX/08av6TxfDGTBnsKLRTgqXWFwg')
 ;

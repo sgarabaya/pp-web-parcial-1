@@ -6,11 +6,68 @@ Auth::requireRole("STOCK");
 require_once "../components/header.php";
 require_once "../components/navbar.php";
 navbar("STOCK");
+
+$vehiclesRepo = new VehicleRepository();
 ?>
 <main>
     <article class="full-width">
-
+        <header class="flex-separate">
+            <h1>Inventario</h1>
+            <a class="button primary" href="/views/edit_stock.php">Crear Vehiculo</a>
+        </header>
+        <table>
+            <thead>
+                <th>Marca</th>
+                <th>Modelo</th>
+                <th>Año</th>
+                <th>Precio</th>
+                <th>Inventario</th>
+                <th>Acciones</th>
+            </thead>
+            <tbody>
+                <?php foreach ($vehiclesRepo->findAll() as $vehicle) { ?>
+                    <tr>
+                        <td><?= $vehicle->brand ?></td>
+                        <td><?= $vehicle->model ?></td>
+                        <td><?= $vehicle->year ?></td>
+                        <td>$<?= $vehicle->price ?></td>
+                        <td><?= $vehicle->stock ?></td>
+                        <td class="actions">
+                            <a href="/views/edit_stock.php?id=<?= $vehicle->id ?>">
+                                <img class="tiny" src="/public/edit.png"/>
+                            </a>
+                            <img class="tiny" src="/public/trash.png" onclick="deleteVehicle('<?= $vehicle->id ?>')"/>
+                        </td>
+                    </tr>
+                    <?php } ?>
+            </tbody>
+        </table>
     </article>
+    <dialog id="confirm-dialog">
+        <header>
+            <h2>Eliminar vehiculo</h2>
+        </header>
+            <p class="error-text">Esta operacion no tiene vuelta atras.</p>
+            Desea continuar?
+        <footer>
+            <button class="primary">Cancelar</button>
+            <form action="/actions/stock.php" method="POST">
+                <input type="text" name="id" class="hidden" />
+                <input type="text" name="METHOD" value="DELETE" class="hidden" />
+                <button class="success">Aceptar</button>
+            </form>
+        </footer>
+    </dialog>
 </main>
+
+<script>
+const $ = s => document.querySelector(s);
+function deleteVehicle(id) {
+  const dialog = $('#confirm-dialog');
+  dialog.open = true;
+  $('#confirm-dialog button[class=primary]').onclick= ev => { ev.preventDefault(); dialog.open = false; };
+  $('#confirm-dialog input[name="id"]').value = id;
+}
+</script>
 
 <?php require_once "../components/footer.php"; ?>

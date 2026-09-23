@@ -29,9 +29,8 @@ class User
             created: new DateTimeImmutable($data["created"]),
         );
     }
-    /**
-     * @return array<string>
-     */
+
+    /** @return array<string, mixed> */
     public function mapTo(): array
     {
         return [

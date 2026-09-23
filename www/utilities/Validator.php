@@ -54,8 +54,19 @@ class Validator
     {
         $value = $this->get_value();
 
-        if (!empty($value) && !is_numeric($value)) {
+        if (!is_numeric(filter_var($value, FILTER_VALIDATE_FLOAT))) {
             $this->add_error("must be a number");
+        }
+
+        return $this;
+    }
+
+    public function is_int(): self
+    {
+        $value = $this->get_value();
+
+        if (!is_int(filter_var($value, FILTER_VALIDATE_INT))) {
+            $this->add_error("must be an int");
         }
 
         return $this;
@@ -92,6 +103,18 @@ class Validator
     public function get_errors(): array
     {
         return $this->errors;
+    }
+
+    public function get_errors_as_string(): string
+    {
+        $messages = [];
+        foreach ($this->errors as $key => $value) {
+            array_push($messages, $key . ": ");
+            foreach ($value as $error) {
+                array_push($messages, "\t" . $error);
+            }
+        }
+        return implode("\n", $messages);
     }
 }
 
