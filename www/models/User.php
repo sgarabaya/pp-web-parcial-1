@@ -70,6 +70,15 @@ abstract class User
         return $this->role;
     }
 
+    public function displayName(): string
+    {
+        return sprintf(
+            "%s.%s",
+            substr($this->getName(), 0, 1),
+            $this->getLastName(),
+        );
+    }
+
     protected function assertValidRole(string $role): void {}
 
     abstract public function canSee(string $page): bool;

@@ -6,19 +6,25 @@ function choose($a, $b)
 
 function navbar(string $selected)
 {
+    $user = Auth::user();
+    if (!$user) {
+        Api::redirect("/login.php"); //Como llegaste aca?
+    }
+
     $entries = [
         "OVERVIEW" => ["/index.php", "chart-no-axes-combined", "Resumen"],
         "SALES" => ["/views/sales.php", "handshake", "Ventas"],
         "STOCK" => ["/views/stock.php", "shelving-unit", "Inventario"],
         "USERS" => ["/views/users.php", "user-group", "Empleados"],
-    ]; ?>
+    ];
+    ?>
     <nav class="sidebar" id="sidebar">
         <div>
             <div class="logo">
                 <a href="/index.php">Ruta 9</a>
             </div>
             <?php foreach ($entries as $key => $values) {
-                if (Auth::canSee($key)) {
+                if ($user->canSee($key)) {
                     echo sprintf(
                         '<a href="%s" class="sidebar-entry%s"><i data-lucide="%s"></i><span>%s</span></a>',
                         $values[0],
@@ -30,7 +36,7 @@ function navbar(string $selected)
             } ?>
         </div>
         <a href="/logout.php" class="logout">
-            <span> <?= Auth::getName() ?></span>
+            <span> <?= $user->displayName() ?></span>
             <i data-lucide="log-out"></i>
         </a>
     </nav>

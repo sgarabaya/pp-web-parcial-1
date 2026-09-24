@@ -26,6 +26,12 @@ try {
         throw new Exception(message: Messages::bodyWasEmpty());
     }
 
+    $user = Auth::user();
+    if (!$user) {
+        //Como llegaste aca?
+        throw new Exception(Messages::operationFailed());
+    }
+
     $validator = validate($data);
     if (!$validator->is_valid()) {
         throw new Exception(message: $validator->get_errors_as_string());
@@ -36,7 +42,7 @@ try {
     $salesRepository->registerSale(
         new Sale(
             id: Crypto::uuid4(),
-            userId: Auth::getUserId(),
+            userId: $user->getId(),
             vehicleId: $data["vehicle_id"],
             paidAmount: $data["paid_amount"],
             clientName: $data["client_name"],
