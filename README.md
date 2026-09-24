@@ -18,7 +18,8 @@ sobre MySQL, distribuida con Docker.
   - Registro de ventas (rol `SALES`): descontar stock automáticamente y en
     transacción.
   - Panel de control con métricas (total recaudado, unidades disponibles) y
-    gráfico de ventas por empleado (Chart.js).
+    cuatro gráficos de barras (Chart.js): tendencia mensual de recaudación,
+    modelos más vendidos, ventas mensuales por empleado y stock vs. ventas.
 - **Interfaz**: HTML renderizado en servidor + CSS propio (tema oscuro), iconos
   Lucide y Chart.js vía CDN. Sin framework de frontend ni compilación.
 
@@ -80,13 +81,12 @@ datos.
 
 ### Credenciales por defecto
 
-| Email                 | Password | Rol   |
-| --------------------- | -------- | ----- |
-| `admin@ruta9.ar`      | `admin`  | ADMIN |
-| `jorge.perez@ruta9.ar`| `jorge`  | STOCK |
-| `florencia.flores@ruta9.ar` | `flor` | SALES |
-| `enzo.garcia@ruta9.ar`| `enzo`   | SALES |
-| `elva.bozzo@ruta9.ar` | `elva`   | SALES |
+| Email | Password | Rol |
+| ----- | -------- | --- |
+| `admin@ruta9.ar` | `admin` | ADMIN (migración inicial) |
+| `elva.bozzo@ruta9.ar`, `sofia.martinez@ruta9.ar` | `123` | ADMIN |
+| `alejandro.lopez@ruta9.ar`, `valentina.gonzalez@ruta9.ar`, `diego.rodriguez@ruta9.ar` | `456` | STOCK |
+| `carmen.perez@ruta9.ar`, `javier.sanchez@ruta9.ar`, `lucia.ramirez@ruta9.ar`, `carlos.cruz@ruta9.ar`, `isabella.torres@ruta9.ar`, `andres.flores@ruta9.ar`, `elena.gomez@ruta9.ar`, `miguel.diaz@ruta9.ar`, `camila.reyes@ruta9.ar`, `luis.morales@ruta9.ar` | `789` | SALES |
 
 ## Configuración por variables de entorno
 

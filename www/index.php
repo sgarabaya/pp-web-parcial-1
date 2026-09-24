@@ -77,9 +77,14 @@ $salesRepo = new SaleRepository();
     </div>
     <article class="full-width">
         <header>
-            <h3>Estadisticas</h3>
+            <h2>Estadisticas</h2>
         </header>
-        <canvas class="stats-chart" id="sales-chart"></canvas>
+        <div class="charts-container">
+            <canvas class="chart" id="trend-chart"></canvas>
+            <canvas class="chart" id="vehicles-chart"></canvas>
+            <canvas class="chart" id="employee-chart"></canvas>
+            <canvas class="chart" id="stock-chart"></canvas>
+        </div>
     </article>
 </main>
 
@@ -87,7 +92,7 @@ $salesRepo = new SaleRepository();
 <script src="/public/charts.js"></script>
 <script>
   document.addEventListener('DOMContentLoaded', ()=> {
-    loadSalesOverview(<?= json_encode($salesRepo->fetchSalesOverview()) ?>);
+    createCharts(<?= json_encode($salesRepo->fetchSalesOverview()) ?>);
   });
 </script>
 <?php require_once "components/footer.php"; ?>

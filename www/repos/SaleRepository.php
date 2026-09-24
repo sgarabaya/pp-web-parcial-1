@@ -101,12 +101,15 @@ class SaleRepository extends Repository
         $query = "
             SELECT
                 U.id,
-                CONCAT(U.name, ' ', U.last_name)    AS `userName`,
-                COUNT(S.id)                         AS `salesCount`,
-                SUM(S.paid_amount)                  AS `totalAmount`
+                CONCAT(U.name, ' ', U.last_name)                    AS `employee`,
+                DATE_FORMAT(S.created, '%Y-%m')                     AS `created`,
+                S.paid_amount                                       AS `paidAmount`,
+                CONCAT(V.brand, ' ', V.model, ' (', V.year, ')')    AS `vehicle`,
+                V.stock                                             AS `vehicleStock`
             FROM Sales S
             INNER JOIN Users U ON U.id = S.user_id
-            GROUP BY 1, 2;
+            INNER JOIN Vehicles V ON V.id = S.vehicle_id
+            ORDER BY S.created DESC
         ";
 
         $stmt = Database::connect()->prepare($query);

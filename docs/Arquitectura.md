@@ -58,8 +58,11 @@ entrypoint PHP (views/*.php | actions/*.php | index.php | login.php)
 - HTML renderizado en servidor; sin SPA ni build step.
 - `public/style.css`: tema propio, oscuro, variables CSS en `:root`, layout con
   sidebar fija.
-- `public/charts.js`: arma un gráfico de torta (Chart.js 4.5.1) con el resumen
-  de ventas por empleado.
+- `public/charts.js`: arma cuatro gráficos de barras (Chart.js 4.5.1) en el
+  panel a partir del listado plano de ventas (`fetchSalesOverview`): tendencia
+  mensual de recaudación, vehículos más vendidos, ventas mensuales por empleado
+  (apiladas) y unidades vendidas vs. inventario actual por modelo (doble eje).
+  La agrupación de datos se hace en el cliente (`groupBy`).
 - Iconos: Lucide (`unpkg`). Fuentes: Google Fonts. Ambos por CDN en
   `components/header.php` / `components/footer.php`.
 - Mensajes al usuario: toasts consumidos desde la sesión (ver

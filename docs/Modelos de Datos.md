@@ -142,8 +142,12 @@ conversión entre fila y objeto:
     [Ciclo de Vida](Ciclo%20de%20Vida.md#registro-de-venta-salephp--salerepositoryregistersale)).
   - `fetchDetails(): SaleView[]`: `INNER JOIN` de `Sales` con `Users` y
     `Vehicles`, ordenado por fecha descendente.
-  - `fetchSalesOverview()`: `GROUP BY` usuario → `salesCount`, `totalAmount`
-    (alimenta el gráfico del dashboard).
+  - `fetchSalesOverview()`: lista plana de ventas (sin agrupar) con JOIN a
+    usuarios y vehículos. Columnas: `id`, `employee` (nombre y apellido),
+    `paidAmount`, `vehicle` (marca + modelo + año), `vehicleStock` (stock
+    actual del vehículo) y `created` como mes `YYYY-MM` (vía `DATE_FORMAT`),
+    ordenada por fecha descendente. La agrupación y el cálculo (por mes,
+    empleado y vehículo) se hacen en el cliente (`charts.js`).
 
 ## Queries agregadas del dashboard
 

@@ -485,7 +485,14 @@ nav.sidebar a {
     }
 }
 
-.stats-chart {
-    max-width: 250px;
-    max-height: 300px;
+.chart {
+    max-width: 45%;
+}
+
+.charts-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-evenly;
+    flex-flow: row wrap;
+    gap: 1rem;
 }

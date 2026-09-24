@@ -87,13 +87,12 @@ Visibilidad del menú (navbar) vía `canSee`:
 
 ## Usuarios (demo)
 
-| Email                 | Rol   | Password |
-| --------------------- | ----- | -------- |
+| Email | Rol   | Password |
+| ----- | ----- | -------- |
 | `admin@ruta9.ar`      | ADMIN | `admin`  |
-| `jorge.perez@ruta9.ar`| STOCK | `jorge`  |
-| `florencia.flores@ruta9.ar` | SALES | `flor` |
-| `enzo.garcia@ruta9.ar`| SALES | `enzo`   |
-| `elva.bozzo@ruta9.ar` | SALES | `elva`   |
+| `elva.bozzo@ruta9.ar`, `sofia.martinez@ruta9.ar` | ADMIN | `123` |
+| `alejandro.lopez@ruta9.ar`, `valentina.gonzalez@ruta9.ar`, `diego.rodriguez@ruta9.ar` | STOCK | `456` |
+| `carmen.perez@ruta9.ar`, `javier.sanchez@ruta9.ar`, `lucia.ramirez@ruta9.ar`, `carlos.cruz@ruta9.ar`, `isabella.torres@ruta9.ar`, `andres.flores@ruta9.ar`, `elena.gomez@ruta9.ar`, `miguel.diaz@ruta9.ar`, `camila.reyes@ruta9.ar`, `luis.morales@ruta9.ar` | SALES | `789` |
 
 ## Consideraciones de seguridad (estado actual)
 

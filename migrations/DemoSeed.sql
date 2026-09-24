@@ -1,12 +1,31 @@
 USE ruta9;
 
-INSERT IGNORE INTO Users
+-- passwords: '123', '456', '789'
+SELECT @password_1 = '$argon2id$v=19$m=65536,t=4,p=1$aTd1ZkRFZHJ6QTJUMmhMaA$1cyBJMS2FqDChA02ia87f2MVaLOt14i2edrxDHUCHpU';
+SELECT @password_2 = '$argon2id$v=19$m=65536,t=4,p=1$NDhSLnpXbDBTbWJuaS84Sw$EhkjuhUvy1TgLwSHSrigQGCkDwaGdXrTh+f16rM3vkM';
+SELECT @password_3 = '$argon2id$v=19$m=65536,t=4,p=1$Z1I0dFFRaDl5TVRhN2pabw$DDPoaDMm80yoZiPcCKvLerFuuAX13a53uiTwQQlB75w';
+
+INSERT INTO Users
     (id, name, last_name, email, role, password_hash)
 VALUES
-    (UUID(), 'Jorge', 'Perez', 'jorge.perez@ruta9.ar', 'STOCK', /* pwd:jorge */ '$argon2id$v=19$m=65536,t=4,p=1$enFPelp5VFNlS25WZ2dDTg$hHEoOk6LzHDZjm05dvutaptp8aGDoBkblvG7uqWBCdQ'),
-    (UUID(), 'Florencia', 'Flores', 'florencia.flores@ruta9.ar', 'SALES', /* pwd:flor */ '$argon2id$v=19$m=65536,t=4,p=1$Zk9LekJCU2pSWjFJcG5TWg$rjI7Ywqatn08DLO/OaHgZwAMC7vIGfZhAibEstZf4uo'),
-    (UUID(), 'Enzo', 'Garcia', 'enzo.garcia@ruta9.ar', 'SALES', /* pwd:enzo */ '$argon2id$v=19$m=65536,t=4,p=1$RERMVnhNZ2ZWN1lPWXE2ZA$sR02YaOQ6Z+9ZD7PcsnVbbiUqqJw3zspKi0oIyVacZs'),
-    (UUID(), 'Elva', 'Bozzo', 'elva.bozzo@ruta9.ar', 'SALES', /* pwd:elva */ '$argon2id$v=19$m=65536,t=4,p=1$N3ZNd3ZobU80UGpsWUVhYQ$8cQvZwMIZxOMONl68wQF/5kkyUoiEdKuAICuFrFmezw')
+-- ADMINS
+    (UUID(), 'Elva', 'Bozzo', 'elva.bozzo@ruta9.ar', 'ADMIN', @password_1),
+    (UUID(), 'Sofia', 'Martinez', 'sofia.martinez@ruta9.ar', 'ADMIN', @password_1),
+-- STOCK
+    (UUID(), 'Alejandro', 'Lopez', 'alejandro.lopez@ruta9.ar', 'STOCK', @password_2),
+    (UUID(), 'Valentina', 'Gonzalez', 'valentina.gonzalez@ruta9.ar', 'STOCK', @password_2),
+    (UUID(), 'Diego', 'Rodriguez', 'diego.rodriguez@ruta9.ar', 'STOCK', @password_2),
+-- SALES
+    (UUID(), 'Carmen', 'Perez', 'carmen.perez@ruta9.ar', 'SALES', @password_3),
+    (UUID(), 'Javier', 'Sanchez', 'javier.sanchez@ruta9.ar', 'SALES', @password_3),
+    (UUID(), 'Lucia', 'Ramirez', 'lucia.ramirez@ruta9.ar', 'SALES', @password_3),
+    (UUID(), 'Carlos', 'Cruz', 'carlos.cruz@ruta9.ar', 'SALES', @password_3),
+    (UUID(), 'Isabella', 'Torres', 'isabella.torres@ruta9.ar', 'SALES', @password_3),
+    (UUID(), 'Andres', 'Flores', 'andres.flores@ruta9.ar', 'SALES', @password_3),
+    (UUID(), 'Elena', 'Gomez', 'elena.gomez@ruta9.ar', 'SALES', @password_3),
+    (UUID(), 'Miguel', 'Diaz', 'miguel.diaz@ruta9.ar', 'SALES', @password_3),
+    (UUID(), 'Camila', 'Reyes', 'camila.reyes@ruta9.ar', 'SALES', @password_3),
+    (UUID(), 'Luis', 'Morales', 'luis.morales@ruta9.ar', 'SALES', @password_3)
 ;
 
 INSERT IGNORE INTO Vehicles (id, brand, model, year, price, stock)
@@ -14,38 +33,27 @@ VALUES
     (UUID(), 'Audi', 'A4', 2021, 40000.0, 1),
     (UUID(), 'BMW', '3 Series', 2021, 41000.0, 3),
     (UUID(), 'Chevrolet', 'Silverado', 2022, 35000.0, 7),
-    (UUID(), 'Ford', 'Escape', 2020, 26000.0, 8),
     (UUID(), 'Ford', 'Explorer', 2021, 33000.0, 6),
     (UUID(), 'Ford', 'F-Series', 2022, 35000.0, 13),
-    (UUID(), 'Ford', 'Focus', 2019, 20000.0, 6),
-    (UUID(), 'Honda', 'Accord', 2020, 25000.0, 4),
+    (UUID(), 'Ford', 'Focus', 2019, 20000.0, 0),
     (UUID(), 'Honda', 'CR-V', 2022, 28000.0, 13),
     (UUID(), 'Honda', 'Civic', 2021, 22000.0, 2),
-    (UUID(), 'Honda', 'HR-V', 2021, 22000.0, 1),
     (UUID(), 'Hyundai', 'Elantra', 2021, 20000.0, 14),
     (UUID(), 'Hyundai', 'Santa Fe', 2021, 28000.0, 2),
     (UUID(), 'Hyundai', 'Tucson', 2022, 26000.0, 1),
-    (UUID(), 'Kia', 'Rio', 2020, 16000.0, 7),
     (UUID(), 'Kia', 'Sorento', 2021, 26000.0, 4),
     (UUID(), 'Kia', 'Sportage', 2022, 25000.0, 14),
     (UUID(), 'Mercedes-Benz', 'C-Class', 2021, 56000.0, 14),
-    (UUID(), 'Nissan', 'Qashqai', 2021, 24000.0, 4),
     (UUID(), 'Nissan', 'Rogue', 2021, 26000.0, 0),
     (UUID(), 'Nissan', 'Sentra', 2021, 20000.0, 13),
     (UUID(), 'Subaru', 'Forester', 2021, 25000.0, 3),
-    (UUID(), 'Tesla', 'Model 3', 2022, 47000.0, 9),
-    (UUID(), 'Tesla', 'Model Y', 2023, 50000.0, 8),
     (UUID(), 'Toyota', 'Camry', 2021, 26000.0, 5),
     (UUID(), 'Toyota', 'Corolla', 2020, 22000.0, 7),
-    (UUID(), 'Toyota', 'Highlander', 2021, 36000.0, 0),
     (UUID(), 'Toyota', 'Hilux', 2022, 30000.0, 14),
-    (UUID(), 'Toyota', 'RAV4', 2022, 30000.0, 4),
     (UUID(), 'Toyota', 'Tacoma', 2021, 27000.0, 8),
-    (UUID(), 'Toyota', 'Yaris', 2020, 17000.0, 2),
     (UUID(), 'Volkswagen', 'Golf', 2020, 24000.0, 15),
     (UUID(), 'Volkswagen', 'Passat', 2020, 25000.0, 10),
-    (UUID(), 'Volkswagen', 'Polo', 2020, 18000.0, 1),
-    (UUID(), 'Volkswagen', 'Tiguan', 2022, 27000.0, 7)
+    (UUID(), 'Volkswagen', 'Polo', 2020, 18000.0, 1)
 ;
 
 CREATE TEMPORARY TABLE temp_clients (
