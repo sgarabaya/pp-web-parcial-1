@@ -1,10 +1,20 @@
 <?php
 class MetricasDashboard
 {
-    // Propiedad 1: Contador de visualizaciones de la sesión
-    public static $visualizaciones_sesion = 0;
+    // Contador de visualizaciones de la sesión
+    public static function get_visualizaciones_sesion(): int
+    {
+        return $_SESSION["visualizaciones"];
+    }
+    public static function registrarVisualizacion(): void
+    {
+        if (!isset($_SESSION["visualizaciones"])) {
+            $_SESSION["visualizaciones"] = 0;
+        }
+        $_SESSION["visualizaciones"] += 1;
+    }
 
-    // Método 1: Calcula las ventas
+    // Calcula las ventas
     public static function obtenerTotalRecaudado(PDO $db_connection): float
     {
         $stmt = $db_connection->prepare(
@@ -15,7 +25,7 @@ class MetricasDashboard
         return $resultado["total"] ?? 0;
     }
 
-    // Método 2: Cuenta la cantidad de vehículos disponibles en stock
+    // Cuenta la cantidad de vehículos disponibles en stock
     public static function obtenerCantidadVehiculosDisponibles(
         PDO $db_connection,
     ): int {
@@ -25,12 +35,6 @@ class MetricasDashboard
         $stmt->execute();
         $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
         return $resultado["total"] ?? 0;
-    }
-
-    // Método 3: Registrar nueva visualización
-    public static function registrarVisualizacion(): void
-    {
-        self::$visualizaciones_sesion++;
     }
 }
 ?>

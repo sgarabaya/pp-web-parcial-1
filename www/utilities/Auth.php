@@ -93,6 +93,10 @@ abstract class Auth
             return false;
         }
 
+        if ($page === "SALES" && $role === "STOCK") {
+            return false;
+        }
+
         return true;
     }
 
