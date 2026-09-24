@@ -7,7 +7,7 @@ echo "<h1>Testing Unitario: Módulo de Ventas</h1>";
 
 try {
     // 1. Obtener conexión
-    $db = Database::getInstance()->getConnection();
+    $db = Database::connect();
 
     // 2. Instancia el repositorio
     $saleRepo = new SaleRepository($db);

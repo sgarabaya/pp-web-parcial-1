@@ -96,6 +96,11 @@ abstract class Auth
         return true;
     }
 
+    public static function hasRole(string $role): bool
+    {
+        return self::$userRole === $role;
+    }
+
     public static function canEdit(string $obj): bool
     {
         $role = self::$userRole;

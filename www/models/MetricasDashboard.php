@@ -5,10 +5,10 @@ class MetricasDashboard
     public static $visualizaciones_sesion = 0;
 
     // Método 1: Calcula las ventas
-    public static function obtenerTotalRecaudado($db_connection)
+    public static function obtenerTotalRecaudado(PDO $db_connection): float
     {
         $stmt = $db_connection->prepare(
-            "SELECT SUM(amount) as total FROM sales",
+            "SELECT SUM(paid_amount) as total FROM Sales",
         );
         $stmt->execute();
         $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -16,10 +16,11 @@ class MetricasDashboard
     }
 
     // Método 2: Cuenta la cantidad de vehículos disponibles en stock
-    public static function obtenerCantidadVehiculosDisponibles($db_connection)
-    {
+    public static function obtenerCantidadVehiculosDisponibles(
+        PDO $db_connection,
+    ): int {
         $stmt = $db_connection->prepare(
-            "SELECT COUNT(*) as total FROM vehicles WHERE status = 'disponible'",
+            "SELECT SUM(stock) as total FROM Vehicles",
         );
         $stmt->execute();
         $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -27,7 +28,7 @@ class MetricasDashboard
     }
 
     // Método 3: Registrar nueva visualización
-    public static function registrarVisualizacion()
+    public static function registrarVisualizacion(): void
     {
         self::$visualizaciones_sesion++;
     }
