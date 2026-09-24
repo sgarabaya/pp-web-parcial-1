@@ -1,7 +1,7 @@
 # Modelo de datos
 
 La base es **MySQL**, esquema `ruta9`, manejada enteramente por los archivos SQL de `migrations/` y
-accedida a través de la capa PDO que se describe en [patterns.md](patterns.md#4-singleton--database).
+accedida a través de la capa PDO que se describe en [Patrones.md](Patrones.md#4-singleton--database).
 
 ---
 
@@ -70,7 +70,7 @@ puedan loguearse sin pasar el texto plano en otro archivo.
 | `client_name` | `VARCHAR(40)` NOT NULL | |
 | `client_contact` | `VARCHAR(40)` NOT NULL | Teléfono o email |
 | `payment_method` | `VARCHAR(40)` NOT NULL | Uno de `CASH`, `FINANCED`, `EXCHANGE+CASH`, `EXCHANGE+FINANCED` (no hay `ENUM` en SQL; el conjunto válido lo definen el formulario y la función de mapeo de la app) |
-| `created` | `DATETIME DEFAULT CURRENT_TIMESTAMP` | |
+| `created` | `DATETIME DEFAULT CURRENT_TIMESTAMP` | Ordena el listado de ventas (`fetchDetails()` usa `ORDER BY S.created DESC`); el seed genera valores random entre 2024-01-01 y hoy |
 
 ---
 
@@ -110,7 +110,8 @@ Agrega (todo `INSERT IGNORE` / idempotente):
   propósito, para que se vea el estado "sin stock" en la UI.
 - **40 ventas** generadas con una tabla temporal + `INSERT … SELECT … RAND()`: empleados de SALES
   random, vehículos random, `paid_amount` random entre 10 000 y 50 000, método de pago random y una
-  lista de clientes/contactos verosímiles.
+  lista de clientes/contactos verosímiles. El `created` también sale random, entre `2024-01-01` y el
+  presente — así el listado ordenado por fecha y el gráfico del panel tienen datos variados.
 
 > **Re-aplicar migraciones**: como los scripts de init solo corren con un volumen de datos nuevo,
 > cambiar el esquema más adelante implica recrear el volumen de MySQL, p. ej.
@@ -122,9 +123,9 @@ Agrega (todo `INSERT IGNORE` / idempotente):
 
 | Nombre SQL (snake_case) | Modelo PHP | Mapeo |
 |--------------------------|------------|-------|
-| `Users` | `User` | `UserRepository` → `User::mapFrom()/mapTo()` |
+| `Users` | `User` (abstracta → `Administrator` / `Employee`) | `UserRepository` → `User::mapFrom()/mapTo()` (la fábrica despacha la subclase por `role`) |
 | `Vehicles` | `Vehicle` | `VehicleRepository` → `Vehicle::mapFrom()/mapTo()` |
-| `Sales` | `Sale` (+ read model `SaleView`) | `SaleRepository` → `Sale::mapFrom()/mapTo()`; `fetchDetails()` arma `SaleView` con el join de 3 tablas |
+| `Sales` | `Sale` (+ read model `SaleView`) | `SaleRepository` → `Sale::mapFrom()/mapTo()`; `fetchDetails()` arma `SaleView` con el join de 3 tablas y ordena por `created DESC`; `fetchSalesOverview()` agrega por empleado (`COUNT`/`SUM`) para el gráfico del panel |
 
 Detalles del mapeo:
 
@@ -136,5 +137,6 @@ Detalles del mapeo:
   `UserRepository::update()` trata el caso especial de un `password` no vacío hasheándolo dentro de
   `password_hash` antes de delegar en el update genérico.
 
-La página de listado de ventas (`views/sales.php`) renderiza filas de `SaleView`; el panel agrega
-con `MetricasDashboard` (`SUM(paid_amount)`, `SUM(stock)`).
+La página de listado de ventas (`views/sales.php`) renderiza filas de `SaleView` (incluye la columna
+"Fecha" a partir de `created`); el panel combina `MetricasDashboard` (`SUM(paid_amount)`, `SUM(stock)`)
+con el gráfico de `SaleRepository::fetchSalesOverview()` (ingresos y cantidad de ventas por empleado).

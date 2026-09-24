@@ -85,6 +85,7 @@ class SaleRepository extends Repository
         FROM Sales S
         INNER JOIN Users U ON U.id = S.user_id
         INNER JOIN Vehicles V ON V.id = S.vehicle_id
+        ORDER BY S.created DESC
         ;";
 
         $stmt = Database::connect()->prepare($query);

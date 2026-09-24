@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-class User
+abstract class User
 {
     public function __construct(
         protected string $id,
@@ -11,7 +11,9 @@ class User
         protected string $passwordHash,
         protected string $role,
         protected DateTimeImmutable $created,
-    ) {}
+    ) {
+        $this->assertValidRole($role);
+    }
 
     public function setId(string $value): void
     {
@@ -60,11 +62,43 @@ class User
 
     public function setRole(string $value): void
     {
+        $this->assertValidRole($value);
         $this->role = $value;
     }
     public function getRole(): string
     {
         return $this->role;
+    }
+
+    protected function assertValidRole(string $role): void {}
+
+    abstract public function canSee(string $page): bool;
+
+    abstract public function canEdit(string $entity): bool;
+
+    public function satisfies(string $requiredRole): bool
+    {
+        return $this->role === $requiredRole;
+    }
+
+    public static function create(
+        string $id,
+        string $name,
+        string $lastName,
+        string $email,
+        string $passwordHash,
+        string $role,
+        DateTimeImmutable $created,
+    ): self {
+        return self::fromFields(
+            id: $id,
+            name: $name,
+            lastName: $lastName,
+            email: $email,
+            role: $role,
+            passwordHash: $passwordHash,
+            created: $created,
+        );
     }
 
     /**
@@ -73,15 +107,47 @@ class User
      */
     public static function mapFrom(array $data): self
     {
-        return new self(
+        return self::fromFields(
             id: $data["id"],
             name: $data["name"],
             lastName: $data["last_name"],
             email: $data["email"],
-            passwordHash: $data["password_hash"],
             role: $data["role"],
+            passwordHash: $data["password_hash"],
             created: new DateTimeImmutable($data["created"]),
         );
+    }
+
+    // Select the proper subclass switching on the role
+    private static function fromFields(
+        string $id,
+        string $name,
+        string $lastName,
+        string $email,
+        string $role,
+        string $passwordHash,
+        DateTimeImmutable $created,
+    ): self {
+        return match ($role) {
+            "ADMIN" => new Administrator(
+                id: $id,
+                name: $name,
+                lastName: $lastName,
+                email: $email,
+                passwordHash: $passwordHash,
+                role: $role,
+                created: $created,
+            ),
+            default => new Employee(
+                id: $id,
+                name: $name,
+                lastName: $lastName,
+                email: $email,
+                passwordHash: $passwordHash,
+                role: $role,
+                created: $created,
+            ),
+        };
     }
 
     /** @return array<string, mixed> */
@@ -98,4 +164,3 @@ class User
         ];
     }
 }
-?>

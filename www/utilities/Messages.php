@@ -33,6 +33,10 @@ abstract class Messages
     {
         return "Datos incorrectos";
     }
+    public static function wrongRole(): string
+    {
+        return "Rol incorrecto";
+    }
 }
 
 ?>

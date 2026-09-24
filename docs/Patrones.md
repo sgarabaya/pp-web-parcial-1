@@ -1,7 +1,7 @@
 # Patrones de diseño
 
 Esta página profundiza en los patrones de diseño que usa el código. El resumen a alto nivel está en
-[architecture.md](architecture.md#6-patrones-usados-de-una-mirada); acá los vemos uno por uno con
+[Arquitectura.md](Arquitectura.md#6-patrones-usados-de-una-mirada); acá los vemos uno por uno con
 referencias concretas al código.
 
 ---
@@ -52,7 +52,9 @@ class VehicleRepository extends Repository
   CRUD genérico; cada uno le agrega solo su comportamiento:
   - `UserRepository::findByEmail()` envuelve `findBy("email", $email)`.
   - `UserRepository::update()` hashea el campo `password` antes de delegar en el padre.
-  - `SaleRepository::registerSale()` y `fetchDetails()` implementan las queries de dominio.
+  - `SaleRepository` agrega las queries de dominio: `registerSale()` (transacción venta + descuento
+    de stock), `fetchDetails()` (listado con joins) y `fetchSalesOverview()` (agregación por empleado
+    para el gráfico del panel).
 
 ---
 
@@ -108,7 +110,23 @@ Los modelos de dominio (`User`, `Vehicle`, `Sale`) son objetos pelados que saben
 una **fila de la base** (keys en snake_case) y **propiedades tipadas** (camelCase), y de vuelta:
 
 ```php
-class User
+class Vehicle
+{
+    public static function mapFrom(array $data): self { /* fila DB → objeto */ }
+    public function mapTo(): array { /* objeto → fila DB */ }
+}
+```
+
+Es un enfoque estilo data mapper: el repo es dueño del SQL, el modelo es dueño de la conversión de
+forma. También convierte tipos nativos al entrar (`(int)`, `(float)`, `DateTimeImmutable`) y los
+normaliza de vuelta al ir a la base.
+
+`User` es el caso interesante: es la **base abstracta** de la herencia pedida por la consigna
+(`Usuario → Empleado, Administrador`). Comparte con sus subclases el constructor, los getters/setters
+y `mapTo()`, pero `mapFrom()` / `create()` son **fábricas que despachan por rol**:
+
+```php
+abstract class User
 {
     public function __construct(
         protected string $id,
@@ -118,32 +136,41 @@ class User
         protected string $passwordHash,
         protected string $role,
         protected DateTimeImmutable $created,
-    ) {}
-
-    public static function mapFrom(array $data): self {
-        return new self(
-            id: $data["id"],
-            name: $data["name"],
-            lastName: $data["last_name"],
-            // ...
-            created: new DateTimeImmutable($data["created"]),
-        );
+    ) {
+        $this->assertValidRole($role); // hook polimórfico
     }
 
-    public function mapTo(): array {
-        return [
-            "id" => $this->id,
-            "last_name" => $this->lastName,
-            // ...
-            "created" => $this->created->format(DateTimeInterface::ATOM),
-        ];
+    abstract public function canSee(string $page): bool;     // matriz de la navbar
+    abstract public function canEdit(string $entity): bool;  // matriz de los botones
+
+    public function satisfies(string $requiredRole): bool {
+        return $this->role === $requiredRole; // Empleado la hereda; Administrator la sobreescribe a true
     }
+
+    public static function mapFrom(array $data): self
+    {
+        return match ($data["role"]) {
+            "ADMIN" => new Administrator(id: $data["id"], /* ... */),
+            default => new Employee(id: $data["id"], /* ... */),
+        };
+    }
+    // + User::create(...) con el mismo dispatch, para el alta de usuarios
 }
 ```
 
-Es un enfoque estilo data mapper: el repo es dueño del SQL, el modelo es dueño de la conversión de
-forma. También convierte tipos nativos al entrar (`(int)`, `(float)`, `DateTimeImmutable`) y los
-normaliza de vuelta al ir a la base.
+La fábrica elige la subclase según el `role` que viene de la base, y cada subclase impone su propio
+invariante vía el hook `assertValidRole()`, que lanza `InvalidArgumentException` con
+`Messages::wrongRole()` si el rol no corresponde:
+
+- **`Employee`** — no puede ser `ADMIN`; `canSee()`/`canEdit()` codifican la matriz de permisos del
+  empleado según `STOCK`/`SALES`.
+- **`Administrator`** — exige `ADMIN`; `canSee()`/`canEdit()`/`satisfies()` devuelven `true` siempre
+  (el admin es superconjunto).
+
+Así la persistencia no cambió: la tabla `Users` sigue teniendo el `ENUM('ADMIN','STOCK','SALES')`,
+la herencia vive solo en el modelo, y `UserRepository` sigue devolviendo `User` (la subclase concreta)
+sin tocar el CRUD genérico de `Repository`. Son `Auth::requireRole()`, `canSee()` y `canEdit()` los
+que delegan las decisiones de permiso en el objeto (`User::satisfies()`, `canSee()`, `canEdit()`).
 
 El que `User` use `protected` + getters/setters mientras `Vehicle`/`Sale` usan propiedades
 promovidas `public` es una inconsistencia menor del código; los dos estilos cumplen el requisito de
@@ -192,16 +219,16 @@ app:
 | Clase | Responsabilidad | Métodos notables |
 |-------|-----------------|------------------|
 | `Config` | Acceso a variables de entorno (sin credenciales hardcodeadas) | `getDbHost()`, `getDbName()`, `getDbUser()`, `getDbPwd()` |
-| `Auth` | Boot de sesión, login, guards de rol, usuario actual en caché | `load()`, `login()`, `ensureLoggedIn()`, `requireRole()`, `canSee()`, `canEdit()`, `hasRole()` |
+| `Auth` | Boot de sesión, login, guards de rol, usuario actual en caché | `load()`, `login()`, `user()`, `ensureLoggedIn()`, `requireRole()`, `canSee()`, `canEdit()`, `hasRole()` |
 | `Api` | Helpers de request + mensajes flash + redirects | `get_request()`, `get_query_param()`, `safe_get()`, `set_message()`, `set_error_message()`, `redirect()` |
 | `Crypto` | IDs y hasheo de contraseñas | `uuid4()`, `passwordHash()` (Argon2id), `passwordVerify()` |
 | `Validator` | Validación de entrada fluida | `field()`, `is_required()`, `is_email()`, `is_numeric()`, `is_int()`, `has_max_length()`, `custom()`, `is_valid()`, `get_errors()` |
-| `Messages` | Strings centralizados (en español) para el usuario | `operationSuccessful()`, `operationFailed()`, `doesntExist()`, `missingParameter()`, `wrongLoginInfo()` … |
+| `Messages` | Strings centralizados (en español) para el usuario | `operationSuccessful()`, `operationFailed()`, `doesntExist()`, `missingParameter()`, `wrongLoginInfo()`, `wrongRole()` … |
 
 El idiom de clase abstracta con miembros estáticos mantiene estos namespaces sin posibilidad de
 instanciarse y funciona como una "fachada" sobre los globals de PHP (`$_SESSION`, `$_POST`,
 `$_GET`, `getenv`). El comportamiento completo de `Auth` está en
-[authentication-and-rbac.md](authentication-and-rbac.md).
+[Autenticacion.md](Autenticacion.md).
 
 ---
 
@@ -260,7 +287,8 @@ SELECT S.id, CONCAT(U.name,' ',U.last_name) AS `user`,
        S.client_name, S.client_contact, S.payment_method, S.created
 FROM Sales S
 INNER JOIN Users U ON U.id = S.user_id
-INNER JOIN Vehicles V ON V.id = S.vehicle_id;
+INNER JOIN Vehicles V ON V.id = S.vehicle_id
+ORDER BY S.created DESC;
 ```
 
 ---

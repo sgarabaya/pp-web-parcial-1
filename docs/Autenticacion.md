@@ -31,7 +31,7 @@ $user->getLastName()`. Solo se usa para el saludo de la barra lateral.
 
 ## 2. Roles
 
-Definidos por el `ENUM` de `Users.role` (ver [data-model.md](data-model.md#users)):
+Definidos por el `ENUM` de `Users.role` (ver [Modelos de Datos.md](Modelos%20de%20Datos.md#users)):
 
 | Rol | Significado |
 |-----|-------------|
@@ -51,9 +51,10 @@ admin.
 | `load()` | Arranca la sesión + cachea al usuario actual (lo llama `autoload.php`) | — |
 | `login(): bool` | Valida email/contraseña contra la base y puebla la sesión | — |
 | `ensureLoggedIn()` | Exige *cualquier* usuario logueado | `/login.php` |
-| `requireRole(string $role)` | Exige un rol específico; acepta `"ANY"` para "cualquier usuario logueado" | `/login.php` si es anónimo, `/index.php` si es otro rol |
-| `canSee(string $page)` | No bloqueante: ¿este rol puede ver esta sección del nav? | filtra la barra lateral |
-| `canEdit(string $obj)` | No bloqueante: ¿este rol puede hacer las acciones de esta entidad? | filtra botones |
+| `user()` | Hidrata y cachea el objeto `User` actual (una query por request); las decisiones de permiso se delegan en él | — |
+| `requireRole(string $role)` | Exige un rol específico; delega en `User::satisfies()`; acepta `"ANY"` para "cualquier usuario logueado" | `/login.php` si es anónimo, `/index.php` si es otro rol |
+| `canSee(string $page)` | No bloqueante: ¿este rol puede ver esta sección del nav? delega en `User::canSee()` | filtra la barra lateral |
+| `canEdit(string $obj)` | No bloqueante: ¿este rol puede hacer las acciones de esta entidad? delega en `User::canEdit()` | filtra botones |
 | `hasRole(string $role)` | Comparación simple (se usa para UI según rol, p. ej. la tarjeta de finanzas del admin) | — |
 | `getName()` / `getUserId()` | Accesors del usuario en caché | — |
 
@@ -78,47 +79,45 @@ Toda página/acción exige su rol mínimo antes de hacer nada:
 | `views/edit_user.php` | `Auth::requireRole("ADMIN")` | solo `ADMIN` |
 | `actions/users.php` | `Auth::requireRole("ADMIN")` | solo `ADMIN` |
 
-Semántica de `requireRole()`:
+Semántica de `requireRole()` — la decisión final la toma el modelo vía `User::satisfies()`:
 
 ```php
-if (!self::$userId || !self::$userRole) Api::redirect("/login.php"); // anónimo
-if ($required_role === "ANY") return;                                 // cualquier usuario pasa
-if (self::$userRole === "ADMIN") return;                              // admin es superconjunto
-if (self::$userRole !== $required_role) Api::redirect("/index.php");  // rol equivocado
+public static function requireRole(string $required_role): void
+{
+    $user = self::user();                   // hidrata + cachea el User actual
+    if (!$user) Api::redirect("/login.php"); // anónimo
+
+    if ($required_role === "ANY") return;    // cualquier usuario logueado pasa
+
+    if (!$user->satisfies($required_role)) {
+        Api::redirect("/index.php");         // rol equivocado
+    }
+}
 ```
+
+`Employee::satisfies($role)` compara el rol propio contra el exigido (heredado de `User`);
+`Administrator::satisfies()` siempre devuelve `true` — es la forma polimórfica del "admin es
+superconjunto".
 
 ### Filtrado a nivel de UI (aplicación blanda)
 
 La barra lateral oculta las secciones que el rol no puede usar, y las páginas ocultan los botones
 que el rol no puede tocar. Es azúcar de presentación encima de los guards duros de arriba.
 
-**`Auth::canSee($page)`** — controla las entradas de la navbar:
+**`Auth::canSee($page)`** — controla las entradas de la navbar; delega en el modelo:
 
 ```php
 public static function canSee(string $page): bool
 {
-    $role = self::$userRole;
-
-    //Admin puede ver todo
-    if ($role === "ADMIN" || $page === "OVERVIEW") {
-        return true;
-    }
-
-    if ($page === "USERS") {
-        return false;
-    }
-
-    if ($page === "SALES" && $role === "STOCK") {
-        return false;
-    }
-
-    return true;
+    //La matriz de permisos vive en el modelo (User::canSee).
+    return self::user()?->canSee($page) ?? false;
 }
 ```
 
-El último `if` es la corrección que alinea el nav con los guards de ruta: un empleado `STOCK` ve la
-entrada "Ventas" en la barra, pero la ruta le devuelve un redirect a `/index.php` — así que la
-entrada directamente no se muestra.
+La matriz vive en los modelos: `Employee::canSee()` responde `OVERVIEW`/`STOCK`/`SALES`/`USERS`
+según el rol propio del empleado, y `Administrator::canSee()` devuelve `true` siempre. La corrección
+que antes vivía en `Auth` (un empleado `STOCK` no ve la entrada "Ventas") ahora es parte de esa
+matriz.
 
 Layout del nav según rol:
 
@@ -133,15 +132,18 @@ Layout del nav según rol:
 > *permiten* las rutas. Hoy están alineadas (un `STOCK` no ve la entrada de Ventas), pero la matriz
 > de rutas de arriba es la que manda de verdad.
 
-**`Auth::canEdit($obj)`** — controla los botones de acción de una página:
+**`Auth::canEdit($obj)`** — controla los botones de acción de una página; delega en el modelo:
 
 ```php
 public static function canEdit(string $obj): bool
 {
-    if (self::$userRole === "ADMIN") return true;
-    return self::$userRole === $obj; // "STOCK" o "SALES"
+    //La matriz de permisos vive en el modelo (User::canEdit).
+    return self::user()?->canEdit($obj) ?? false;
 }
 ```
+
+`Employee::canEdit($entity)` responde `true` solo si el rol propio coincide con la entidad (`STOCK` o
+`SALES`); `Administrator::canEdit($entity)` siempre `true`.
 
 Dónde se usa:
 

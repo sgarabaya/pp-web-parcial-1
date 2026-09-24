@@ -5,6 +5,7 @@ abstract class Auth
     private static $userId;
     private static $userRole;
     private static $userName;
+    private static ?User $user = null;
 
     protected function __construct() {}
 
@@ -24,6 +25,14 @@ abstract class Auth
     public static function getName(): string
     {
         return self::$userName;
+    }
+
+    public static function user(): ?User
+    {
+        if (self::$user === null && self::$userId) {
+            self::$user = (new UserRepository())->findById(self::$userId);
+        }
+        return self::$user;
     }
 
     public static function login(): bool
@@ -50,6 +59,8 @@ abstract class Auth
                 $user->getLastName(),
             );
 
+            self::$user = $user;
+
             return true;
         }
 
@@ -65,39 +76,23 @@ abstract class Auth
 
     public static function requireRole(string $required_role): void
     {
-        if (!self::$userId || !self::$userRole) {
+        $user = self::user();
+        if (!$user) {
             Api::redirect("/login.php");
         }
 
         if ($required_role === "ANY") {
             return; //Si no hay un requerimiento de rol, volvemos (para el index)
         }
-        if (self::$userRole === "ADMIN") {
-            return; //El rol admin puede ver todo
-        }
-        if (self::$userRole !== $required_role) {
+
+        if (!$user->satisfies($required_role)) {
             Api::redirect("/index.php");
         }
     }
 
     public static function canSee(string $page): bool
     {
-        $role = self::$userRole;
-
-        //Admin puede ver todo
-        if ($role === "ADMIN" || $page === "OVERVIEW") {
-            return true;
-        }
-
-        if ($page === "USERS") {
-            return false;
-        }
-
-        if ($page === "SALES" && $role === "STOCK") {
-            return false;
-        }
-
-        return true;
+        return self::user()?->canSee($page) ?? false;
     }
 
     public static function hasRole(string $role): bool
@@ -107,13 +102,6 @@ abstract class Auth
 
     public static function canEdit(string $obj): bool
     {
-        $role = self::$userRole;
-
-        //Admin puede hacer todo
-        if ($role === "ADMIN") {
-            return true;
-        }
-
-        return $role === $obj;
+        return self::user()?->canEdit($obj) ?? false;
     }
 }

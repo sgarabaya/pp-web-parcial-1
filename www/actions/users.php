@@ -63,7 +63,7 @@ function create()
     }
 
     $userRepository = new UserRepository();
-    $user = new User(
+    $user = User::create(
         id: Crypto::uuid4(),
         name: $data["name"],
         lastName: $data["last_name"],

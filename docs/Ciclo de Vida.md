@@ -2,7 +2,7 @@
 
 Esta página recorre qué pasa de verdad adentro del proceso PHP, desde que se pide una URL hasta que
 se devuelve una página (o un redirect). Asume el mismo *cómo* de
-[architecture.md](architecture.md#5-flujo-de-una-request-a-alto-nivel) pero va línea por línea.
+[Arquitectura.md](Arquitectura.md#5-flujo-de-una-request-a-alto-nivel) pero va línea por línea.
 
 ---
 
@@ -97,7 +97,7 @@ Notas:
   no hay inyección SQL por el formulario de login.
 - Las contraseñas se verifican con `password_verify()` contra un hash **Argon2id**
   (`Crypto::passwordHash()` usa `PASSWORD_ARGON2ID`); la base solo guarda hashes — ver
-  [data-model.md](data-model.md#users).
+  [Modelos de Datos.md](Modelos%20de%20Datos.md#users).
 - Un intento fallido setea un flash genérico ("Datos incorrectos") vía PRG, así que la página de
   login muestra el toast después del redirect.
 
@@ -120,7 +120,7 @@ Toda página protegida llama a uno de tres guards justo después de `autoload.ph
 |-------|----------------|
 | `Auth::ensureLoggedIn()` | Redirect a `/login.php` si faltan `user.id`/`user.role`. Cualquier rol logueado pasa. |
 | `Auth::requireRole("STOCK" / "SALES" / "ADMIN")` | Sin login → `/login.php`; logueado con otro rol → `/index.php`; `ADMIN` pasa cualquier chequeo de rol; `"ANY"` significa "cualquier usuario logueado". |
-| `canSee($page)` / `canEdit($obj)` | Chequeos no bloqueantes que se usan para *filtrar la UI* (entradas de la barra lateral, botones de acción). Ver [authentication-and-rbac.md](authentication-and-rbac.md). |
+| `canSee($page)` / `canEdit($obj)` | Chequeos no bloqueantes que se usan para *filtrar la UI* (entradas de la barra lateral, botones de acción). Ver [Autenticacion.md](Autenticacion.md). |
 
 ---
 
@@ -253,7 +253,9 @@ Por qué importa:
 - Se le pasa `$vehicle->mapTo()` a `update()`, pero la whitelist de columnas del repo solo deja
   pasar `brand, model, year, price, stock` — así `id`/`created` no se pueden alterar.
 - Al éxito, la acción setea el flash y hace PRG a `/views/sales.php`, que lista las ventas con
-  empleado/vehículo en texto vía `SaleRepository::fetchDetails()`.
+  empleado/vehículo en texto vía `SaleRepository::fetchDetails()`. Además de los datos que ya
+  mostraba, el listado suma una columna **"Fecha"** (`created`, formato `Y/m/d`) y viene ordenado por
+  **fecha descendente** (`ORDER BY S.created DESC`), así la venta más reciente queda arriba.
 
 No hay edición ni baja de ventas a propósito: una vez registrada, una venta es inmutable en esta
 app.
@@ -271,7 +273,10 @@ GET /index.php
   ├─ $es_admin = Auth::hasRole("ADMIN");
   ├─ $total_recaudado = MetricasDashboard::obtenerTotalRecaudado($db);          // SUM(paid_amount)
   ├─ $stock_actual    = MetricasDashboard::obtenerCantidadVehiculosDisponibles($db); // SUM(stock)
-  └─ render header/nav + tarjetas (finanzas solo admin vs. accesos rápidos del empleado)
+  ├─ $salesRepo = new SaleRepository();
+  ├─ render header/nav + tarjetas (finanzas solo admin vs. accesos rápidos del empleado)
+  │        + sección "Estadisticas" con <canvas id="sales-chart">
+  └─ json_encode($salesRepo->fetchSalesOverview()) → loadSalesOverview() (public/charts.js)
 ```
 
 `MetricasDashboard` es una clase de conveniencia con miembros estáticos. El contador de
@@ -314,6 +319,13 @@ Detalles:
   `registrarVisualizacion()` antes de mostrar el valor, así la key siempre existe en el flujo real.
 - Sigue satisfaciendo el requisito de la consigna de "métodos estáticos" (toda la clase es
   estática), y encima ahora el comportamiento es correcto.
+- **Gráfico de ventas por empleado**: después de las tarjetas, el panel renderiza la sección
+  "Estadisticas" con un `<canvas id="sales-chart">`. El JS carga **Chart.js desde el CDN** en
+  runtime y `public/charts.js` (`loadSalesOverview()`) pinta un gráfico de torta. Los datos vienen de
+  `SaleRepository::fetchSalesOverview()`, que agrega por empleado (`GROUP BY U.id`) el **total
+  recaudado** (`SUM(S.paid_amount)`) y la **cantidad de ventas** (`COUNT(S.id)`); el pie muestra las
+  dos series (ingresos en `$` y cantidad). Es visible para **cualquier rol logueado**, porque
+  `index.php` solo exige `Auth::ensureLoggedIn()`.
 
 ---
 

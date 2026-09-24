@@ -113,20 +113,20 @@ www/
 ├── autoload.php              # Autoloader estilo PSR-0 + arranque de sesión
 ├── index.php                 # Panel de control (portada)
 ├── login.php / logout.php    # Entrada/salida de sesión
-├── models/                   # Objetos de dominio pelados (User, Vehicle, Sale, SaleView, MetricasDashboard)
+├── models/                   # Objetos de dominio pelados (User y subclases, Vehicle, Sale, SaleView, MetricasDashboard)
 ├── repos/                    # Capa de persistencia (Database, Repository base + repos concretos)
 ├── actions/                  # Controladores solo-POST (stock, users, sale)
 ├── views/                    # Páginas HTML (stock, users, sales, create_sale, edit_stock, edit_user)
 ├── components/               # Parciales de layout (header, navbar, footer)
 ├── utilities/                # Clases helper estáticas (Config, Api, Auth, Crypto, Validator, Messages)
-├── public/                   # Assets estáticos (style.css, favicon.png)
+├── public/                   # Assets estáticos (style.css, charts.js, favicon.png)
 └── tests/                    # Scripts de test exploratorios (no integrados a ningún runner)
 ```
 
 | Capa        | Responsabilidad                                                          | Ejemplos                          |
 |-------------|--------------------------------------------------------------------------|-----------------------------------|
 | **Utilities** | Servicios transversales, sin estado entre requests (salvo flash y caché de auth en sesión) | `Auth`, `Api`, `Crypto`, `Config`, `Validator`, `Messages` |
-| **Models**    | Objetos de dominio puros con `mapFrom()`/`mapTo()` para serializar fila ↔ objeto | `User`, `Vehicle`, `Sale`, `SaleView` |
+| **Models**    | Objetos de dominio puros con `mapFrom()`/`mapTo()` para serializar fila ↔ objeto | `User` (abstracta) + `Employee`/`Administrator`, `Vehicle`, `Sale`, `SaleView` |
 | **Repos**     | Todo el SQL; la clase base `Repository` implementa el CRUD genérico     | `Repository`, `UserRepository`, `VehicleRepository`, `SaleRepository` |
 | **Actions**   | Controladores: validan entrada, orquestan repos, setean mensaje flash y redirigen (PRG) | `actions/stock.php`, `actions/users.php`, `actions/sale.php` |
 | **Views**     | Renderizan tablas/formularios HTML, aplican los guards de autorización, y solo leen con los repos | `views/stock.php`, `views/sales.php`, … |
@@ -171,7 +171,7 @@ www/
 
 Todo punto de entrada (página o acción) arranca incluyendo `autoload.php`; ese es el único punto de
 boot. El recorrido línea por línea está en
-[request-lifecycle.md](request-lifecycle.md).
+[Ciclo de Vida.md](Ciclo%20de%20Vida.md).
 
 ---
 
@@ -189,7 +189,7 @@ boot. El recorrido línea por línea está en
 | **Post/Redirect/Get (PRG)** | `actions/*.php` | Todo POST que muta termina en `Api::redirect()`, evitando el reenvío del formulario; el feedback viaja en un mensaje flash de sesión que renderiza `footer.php`. |
 | **Emulación de verbos HTTP** | campo oculto `METHOD` | Los formularios HTML solo soportan GET/POST; las acciones despachan según un campo oculto `METHOD=POST/PUT/DELETE`. |
 
-Cada patrón en detalle, con código, está en [patterns.md](patterns.md).
+Cada patrón en detalle, con código, está en [Patrones.md](Patrones.md).
 
 ---
 
@@ -206,7 +206,7 @@ El `TP.md` pedía ciertas features de POO; así se implementa cada una:
 | Métodos y propiedades estáticos | `Crypto::uuid4/passwordHash`, `Auth::*`, `Api::*`, `Config::*`, y `MetricasDashboard` (métodos estáticos de agregación + contador de visualizaciones por sesión). |
 | Conexión a MySQL | `Database` (singleton PDO) + `pdo_mysql` en la imagen. |
 | Formularios HTML + POST | Todas las mutaciones son formularios HTML que postean a `actions/*`. |
-| Usuario → Empleado/Administrador (herencia) | **No está implementado como herencia de clases.** La consigna sugería `Usuario → Empleado, Administrador`; el proyecto modela los roles como un `ENUM('ADMIN','STOCK','SALES')` en una sola clase `User` y los aplica con `Auth::requireRole()` / `canSee()` / `canEdit()`. La herencia real está en la jerarquía de *repositorios*. |
+| Usuario → Empleado/Administrador (herencia) | `User` es una clase **abstracta** con fábricas `mapFrom()`/`create()` que despachan por rol: `ADMIN` → `Administrator`, `STOCK`/`SALES` → `Employee`. Las decisiones de permiso son polimórficas (`canSee()`/`canEdit()`/`satisfies()`): `Employee` codifica la matriz del empleado, `Administrator` responde `true` siempre. La tabla `Users` y su `ENUM('ADMIN','STOCK','SALES')` no cambian. Ver [Patrones.md](Patrones.md#3-mapeo-de-modelos-mapfrom--mapto). |
 
 ---
 
@@ -217,7 +217,7 @@ Cosas que conviene saber si vas a tocar el proyecto:
 - **El contador de visualizaciones vive en la sesión.** `MetricasDashboard` ya no usa una propiedad
   estática: `registrarVisualizacion()` incrementa `$_SESSION["visualizaciones"]` y
   `get_visualizaciones_sesion()` lo lee. Así el conteo sí persiste entre requests de la misma
-  sesión (ver [request-lifecycle.md](request-lifecycle.md#6-el-panel-de-control--indexphp)).
+  sesión (ver [Ciclo de Vida.md](Ciclo%20de%20Vida.md#6-el-panel-de-control--indexphp)).
 - **`www/tests/test_ventas.php` es exploratorio.** Instancia `Sale`/`SaleRepository` de formas que
   ya no matchean los constructores actuales (el código evolucionó de más) y no está conectado a
   ningún runner de tests.

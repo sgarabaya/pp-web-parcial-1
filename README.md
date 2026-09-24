@@ -25,17 +25,17 @@ Y listo, abrí <http://localhost:8080> y entrá con alguna de las cuentas precar
 | Ventas | `florencia.flores@ruta9.ar` | `flor`   |
 
 En el primer arranque, el contenedor de MySQL ejecuta solo el primer script de migración/seed que
-está montado desde `./migrations` (los detalles en [data-model.md](data-model.md#migraciones-y-datos-de-demo)).
+está montado desde `./migrations` (los detalles en [Modelos de Datos.md](Modelos%20de%20Datos.md#migraciones-y-datos-de-demo)).
 
 ## Índice de la documentación
 
 | Archivo | Qué cubre |
 |---------|-----------|
-| [architecture.md](architecture.md) | La arquitectura a alto nivel: Docker/Docker Compose/MySQL, la estructura del código por capas, el flujo de una request y los patrones de una mirada. |
-| [patterns.md](patterns.md) | En detalle los patrones de diseño: Repository, método plantilla, mapeo de modelos, clases de servicios estáticas, validación fluida, PRG, etc. |
-| [request-lifecycle.md](request-lifecycle.md) | El funcionamiento interno: secuencia de arranque, autenticación y recorridos paso a paso del login, los ABM y el registro de ventas. |
-| [data-model.md](data-model.md) | El esquema de MySQL, las migraciones, los datos de demo y las credenciales. |
-| [authentication-and-rbac.md](authentication-and-rbac.md) | Cómo funcionan la autenticación y el control de acceso por roles, con la matriz completa de permisos. |
+| [Arquitectura.md](Arquitectura.md) | La arquitectura a alto nivel: Docker/Docker Compose/MySQL, la estructura del código por capas, el flujo de una request y los patrones de una mirada. |
+| [Patrones.md](Patrones.md) | En detalle los patrones de diseño: Repository, método plantilla, mapeo de modelos, clases de servicios estáticas, validación fluida, PRG, etc. |
+| [Ciclo de Vida.md](Ciclo%20de%20Vida.md) | El funcionamiento interno: secuencia de arranque, autenticación y recorridos paso a paso del login, los ABM y el registro de ventas. |
+| [Modelos de Datos.md](Modelos%20de%20Datos.md) | El esquema de MySQL, las migraciones, los datos de demo y las credenciales. |
+| [Autenticacion.md](Autenticacion.md) | Cómo funcionan la autenticación y el control de acceso por roles, con la matriz completa de permisos. |
 
 ## Resumen de funcionalidades
 
@@ -46,7 +46,8 @@ está montado desde `./migrations` (los detalles en [data-model.md](data-model.m
   descuenta de forma atómica dentro de una transacción de la base.
 - **Gestión de usuarios** (solo admin): alta, listado, modificación y baja de empleados.
 - **Panel de control** (`index.php`): muestra el stock disponible, el total histórico recaudado
-  (admin) y un contador de visualizaciones del panel por sesión (persiste en `$_SESSION`).
+  (admin), un contador de visualizaciones del panel por sesión (persiste en `$_SESSION`) y un
+  gráfico de torta (Chart.js) con los ingresos y la cantidad de ventas por empleado.
 - **Toasts de mensajes** (flash) y una barra lateral filtrada por rol.
 
 ## Stack tecnológico
