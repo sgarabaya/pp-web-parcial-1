@@ -26,9 +26,9 @@ function rolePill($role)
             break;
     }
 }
-function get_role_prio($user)
+function get_role_prio(User $user)
 {
-    return ["ADMIN" => 0, "STOCK" => 1, "SALES" => 2][$user->role];
+    return ["ADMIN" => 0, "STOCK" => 1, "SALES" => 2][$user->getRole()];
 }
 
 $users = $userRepo->findAll();
@@ -52,15 +52,15 @@ usort($users, fn($a, $b) => get_role_prio($a) - get_role_prio($b));
                 <tbody>
                     <?php foreach ($users as $user) { ?>
                         <tr>
-                            <td><?= $user->name ?></td>
-                            <td><?= $user->lastName ?></td>
-                            <td><?= $user->email ?></td>
-                            <td><?= rolePill($user->role) ?></td>
+                            <td><?= $user->getName() ?></td>
+                            <td><?= $user->getLastName() ?></td>
+                            <td><?= $user->getEmail() ?></td>
+                            <td><?= rolePill($user->getRole()) ?></td>
                             <td class="actions">
-                                <a href="/views/edit_user.php?id=<?= $user->id ?>">
+                                <a href="/views/edit_user.php?id=<?= $user->getId() ?>">
                                     <i data-lucide="square-pen"></i>
                                 </a>
-                                <a href="#" onclick="deleteUser('<?= $user->id ?>')"><i data-lucide="trash"></i></a>
+                                <a href="#" onclick="deleteUser('<?= $user->getId() ?>')"><i data-lucide="trash"></i></a>
                             </td>
                         </tr>
                         <?php } ?>

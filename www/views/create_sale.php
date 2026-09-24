@@ -12,7 +12,7 @@ $vehicleRepo = new VehicleRepository();
 $vehicles = $vehicleRepo->findAll();
 
 $vehicleMap = [];
-foreach ($vehicles as $_ => $vehicle) {
+foreach ($vehicles as $vehicle) {
     $vehicleMap[$vehicle->id] = [
         sprintf(
             "%s %s (%s) - $%s",
@@ -35,8 +35,6 @@ $selected_vehicle = function () use ($selectedVehicleId, $vehicleMap) {
 
     return null;
 };
-
-// $salesRepo = new SaleRepository();
 ?>
 <main class="center">
     <article class="full-width"  style="max-height:100%">
@@ -63,17 +61,17 @@ $selected_vehicle = function () use ($selectedVehicleId, $vehicleMap) {
             <br/>
             <?php endif; ?>
             <fieldset class="inline">
-                <input type="number" name="price" placeholder="Precio" />
-                <select name="payment_option" placeholder="Forma de pago">
-                    <option>Contado</option>
-                    <option>Financiado</option>
-                    <option>Canje+Contado</option>
-                    <option>Canje+Financiado</option>
+                <input type="number" name="paid_amount" placeholder="Precio" required/>
+                <select name="payment_method" placeholder="Metodo de Pago" required>
+                    <option value="FINANCED">Financiado</option>
+                    <option value="CASH">Contado</option>
+                    <option value="EXCHANGE+CASH">Canje+Contado</option>
+                    <option value="EXCHANGE+FINANCED">Canje+Financiado</option>
                 </select>
             </fieldset>
             <fieldset class="inline">
-                <input type="text" placeholder="Cliente" />
-                <input type="text" placeholder="Contacto" />
+                <input type="text" placeholder="Cliente"  name="client_name" required />
+                <input type="text" placeholder="Contacto" name="client_contact" required />
             </fieldset>
             <footer class="flex-separate">
                 <a class="button primary flex-separate" href="/views/stock.php">

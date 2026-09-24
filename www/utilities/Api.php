@@ -22,23 +22,9 @@ abstract class Api
     public static function get_request(): mixed
     {
         $body = [];
-        if ($_SERVER["CONTENT_TYPE"] == "application/json") {
-            $input = file_get_contents("php://input");
-            if ($input) {
-                $json = json_decode($input);
-
-                $body["is_json"] = true;
-
-                foreach ($json as $key => $value) {
-                    $body[$key] = $value;
-                }
-            }
-        } else {
-            foreach ($_POST as $key => $value) {
-                $body[$key] = $value;
-            }
+        foreach ($_POST as $key => $value) {
+            $body[$key] = $value;
         }
-
         return $body;
     }
 

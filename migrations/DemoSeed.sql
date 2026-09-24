@@ -106,6 +106,6 @@ SELECT
     ROUND(RAND() * 40000 + 10000, 2),
     client_name,
     client_contact,
-    ELT(FLOOR(RAND() * 3) + 1, 'CASH', 'FINANCED', 'EXCHANGE+CASH', 'EXCHANGE+FINANCED')
+    ELT(FLOOR(RAND() * 4) + 1, 'CASH', 'FINANCED', 'EXCHANGE+CASH', 'EXCHANGE+FINANCED')
 FROM temp_clients
 ;

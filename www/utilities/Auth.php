@@ -16,14 +16,14 @@ abstract class Auth
         self::$userName = Api::safe_get($_SESSION, "user.name");
     }
 
+    public static function getUserId(): string
+    {
+        return self::$userId;
+    }
+
     public static function getName(): string
     {
         return self::$userName;
-    }
-
-    private static function getRole(): ?string
-    {
-        return Api::safe_get($_SESSION, "user.role");
     }
 
     public static function login(): bool
@@ -38,13 +38,16 @@ abstract class Auth
         $userRepo = new UserRepository();
         $user = $userRepo->findByEmail($email);
 
-        if ($user && Crypto::passwordVerify($password, $user->passwordHash)) {
-            $_SESSION["user.id"] = $user->id;
-            $_SESSION["user.role"] = $user->role;
+        if (
+            $user &&
+            Crypto::passwordVerify($password, $user->getPasswordHash())
+        ) {
+            $_SESSION["user.id"] = $user->getId();
+            $_SESSION["user.role"] = $user->getRole();
             $_SESSION["user.name"] = sprintf(
                 "%s.%s",
-                substr($user->name, 0, 1),
-                $user->lastName,
+                substr($user->getName(), 0, 1),
+                $user->getLastName(),
             );
 
             return true;
@@ -103,14 +106,5 @@ abstract class Auth
         }
 
         return $role === $obj;
-    }
-
-    public static function hasRole(string $role): bool
-    {
-        if ($role === "ANY") {
-            return true;
-        }
-
-        return self::$userRole === $role;
     }
 }

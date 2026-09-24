@@ -6,8 +6,8 @@ services:
     environment:
       DB_HOST: db
       DB_NAME: ruta9
-      DB_USER: root
-      DB_PWD: root
+      DB_USER: ruta9
+      DB_PWD: ruta9-pwd
     depends_on:
       - db
     volumes:

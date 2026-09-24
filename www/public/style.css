@@ -7,14 +7,6 @@
     --primary-border: hsl(245, 34%, 25%);
     --primary-background: hsl(242, 34%, 13%);
     --primary-text: hsl(245, 34%, 90%);
-    --secondary: hsl(5, 34%, 37%);
-    --secondary-border: hsl(5, 34%, 25%);
-    --secondary-background: hsl(5, 34%, 10%);
-    --secondary-text: hsl(5, 34%, 90%);
-    --warning: hsl(15, 34%, 37%);
-    --warning-border: hsl(15, 34%, 25%);
-    --warning-text: hsl(15, 34%, 90%);
-
     --success: hsl(143 50% 30%);
     --success-border: hsl(143 75% 25%);
     --success-text: hsl(143 75% 90%);
@@ -26,8 +18,6 @@
     --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
 
     --font: "Roboto", sans-serif;
-    --font-monospace: "Roboto Mono", monospace;
-
     --sidebar-extended: 250px;
 }
 
@@ -121,24 +111,10 @@ button:hover {
     border-color: var(--primary-border);
 }
 
-.secondary {
-    color: var(--secondary-text);
-    background-color: var(--secondary);
-    border-color: var(--secondary-border);
-}
-
 .success {
     color: var(--success-text);
     background-color: var(--success);
     border-color: var(--success-border);
-}
-
-.error-message {
-    text-align: center;
-    border-radius: var(--radius);
-    background-color: hsl(0, 50%, 40%);
-    margin-bottom: 1rem;
-    padding: 0.5rem;
 }
 
 .error {
@@ -149,16 +125,8 @@ button:hover {
     color: hsl(0, 65%, 50%);
 }
 
-.less-bright {
-    filter: brightness(80%);
-}
-
 .full-width {
     width: 100%;
-}
-
-.full-height {
-    height: 100%;
 }
 
 .float-right {
@@ -168,11 +136,6 @@ button:hover {
 .flex-separate {
     display: flex;
     justify-content: space-between;
-    align-items: center;
-}
-
-.horizontal-center {
-    display: flex;
     align-items: center;
 }
 
@@ -390,21 +353,6 @@ nav.sidebar a {
     border: 0 !important;
 }
 
-.logo span {
-    height: 2rem;
-    background-image: url("/public/next.png");
-    background-position: center;
-    filter: invert(1);
-    cursor: pointer;
-    border: 1px solid var(--body-background);
-    padding: 1rem;
-    border-radius: calc(var(--radius) / 2);
-}
-
-.logo span[role="close"] {
-    transform: scaleX(-1);
-}
-
 .logo span:hover {
     zoom: 120%;
 }
@@ -417,11 +365,6 @@ nav.sidebar a {
     box-shadow: var(--shadow);
 }
 
-img.tiny {
-    height: 1.2rem;
-    filter: invert(1);
-}
-
 .pill {
     border-radius: var(--radius);
     padding: 0.25rem 1rem;
@@ -429,7 +372,7 @@ img.tiny {
 
 .pill.admin {
     background-color: hsl(0, 35%, 35%);
-    color: var(--warning-text);
+    color: var(--body-text);
 }
 
 .pill.stock {
@@ -439,21 +382,7 @@ img.tiny {
 
 .pill.sales {
     background-color: hsl(125, 35%, 35%);
-    color: var(--primary-text);
-}
-
-.theme-picker {
-    position: absolute;
-    top: 32px;
-    right: 32px;
-    width: 2rem;
-    height: 2rem;
-    border: 2px solid black;
-    border-radius: var(--radius);
-
-    input {
-        visibility: hidden;
-    }
+    color: var(--body-text);
 }
 
 /* Toast */

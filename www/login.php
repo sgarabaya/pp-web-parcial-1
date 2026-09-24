@@ -10,7 +10,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         Api::redirect("/index.php");
     } else {
         Api::set_error_message(Messages::wrongLoginInfo());
-        Api::redirect("/index.php");
+        Api::redirect("/login.php");
     }
 }
 

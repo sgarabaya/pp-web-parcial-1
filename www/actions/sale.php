@@ -1,17 +1,17 @@
 <?php
 require_once "../autoload.php";
 
-Auth::canEdit("SALES");
+Auth::requireRole("SALES");
 
 function validate(array $data): Validator
 {
     $validator = new Validator($data);
 
-    $validator->field("model")->is_required();
-    $validator->field("brand")->is_required();
-    $validator->field("year")->is_required();
-    $validator->field("price")->is_required();
-    $validator->field("stock")->is_required();
+    $validator->field("vehicle_id")->is_required();
+    $validator->field("paid_amount")->is_required()->is_numeric();
+    $validator->field("client_name")->is_required()->has_max_length(40);
+    $validator->field("client_contact")->is_required()->has_max_length(40);
+    $validator->field("payment_method")->is_required();
 
     return $validator;
 }
@@ -26,7 +26,7 @@ try {
         throw new Exception(message: Messages::bodyWasEmpty());
     }
 
-    $validator = validate($data, isCreate: true);
+    $validator = validate($data);
     if (!$validator->is_valid()) {
         throw new Exception(message: $validator->get_errors_as_string());
     }
@@ -36,7 +36,7 @@ try {
     $salesRepository->registerSale(
         new Sale(
             id: Crypto::uuid4(),
-            userId: $data["user_id"],
+            userId: Auth::getUserId(),
             vehicleId: $data["vehicle_id"],
             paidAmount: $data["paid_amount"],
             clientName: $data["client_name"],

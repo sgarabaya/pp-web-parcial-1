@@ -39,7 +39,7 @@ function update()
     }
 
     $vehicleRepository = new VehicleRepository();
-    if ($vehicleRepository->updatePartial($data["id"], $data)) {
+    if ($vehicleRepository->update($data["id"], $data)) {
         Api::set_message(Messages::operationSuccessful(), "success");
     } else {
         throw new Exception(message: Messages::operationFailed());
@@ -87,7 +87,7 @@ function delete()
         if ($repository->delete((string) $id)) {
             Api::set_message(Messages::operationSuccessful(), "success");
         } else {
-            throw new Exception(message: Messages::missingParameter("id"));
+            throw new Exception(message: Messages::operationFailed());
         }
     }
 }

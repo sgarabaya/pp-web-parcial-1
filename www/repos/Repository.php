@@ -85,15 +85,15 @@ abstract class Repository
     }
 
     /** @param array $partialData */
-    public function updatePartial(string $id, array $partialData): bool
+    public function update(string $id, array $partialData): bool
     {
         if (empty($partialData)) {
             return false;
         }
 
-        $user = $this->findById($id);
-        if (!$user) {
-            return false; //User doesn't exist
+        $el = $this->findById($id);
+        if (!$el) {
+            return false; //Doesn't exist
         }
 
         $data = [];

@@ -15,10 +15,6 @@ abstract class Messages
     {
         return "Rol solo puede ser ADMIN,STOCK o SALES";
     }
-    public static function notFound(): string
-    {
-        return "No se encontro";
-    }
     public static function bodyWasEmpty(): string
     {
         return "Payload invalido, el cuerpo no puede estar vacio";

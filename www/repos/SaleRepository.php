@@ -1,6 +1,6 @@
 <?php
 
-/** @@extends Repository<Sale> */
+/** @extends Repository<Sale> */
 class SaleRepository extends Repository
 {
     #[\Override]
@@ -44,20 +44,32 @@ class SaleRepository extends Repository
         $vehicle = $vehicleRepo->findById($sale->vehicleId);
 
         if (!$user) {
-            throw new Exception(Messages::doesntExist("Vehiculo"));
+            throw new Exception(Messages::doesntExist("Empleado"));
         }
         if (!$vehicle) {
-            throw new Exception(Messages::doesntExist("Empleado"));
+            throw new Exception(Messages::doesntExist("Vehiculo"));
+        }
+        if ($vehicle->stock === 0) {
+            throw new Exception(Messages::operationFailed());
         }
 
         $conn = Database::connect();
-        $conn->beginTransaction();
+        try {
+            $conn->beginTransaction();
 
-        $conn->commit();
+            $this->create($sale);
+            $vehicle->stock -= 1;
+            $vehicleRepo->update($vehicle->id, $vehicle->mapTo());
+
+            $conn->commit();
+        } catch (Exception $ex) {
+            $conn->rollBack();
+            throw $ex;
+        }
     }
 
     //Fetch custom para poder ver todos los detalles
-    /** @@return SaleView[] */
+    /** @return SaleView[] */
     public function fetchDetails(): array
     {
         $query = "SELECT

@@ -29,7 +29,7 @@ class Validator
         return $this;
     }
 
-    /** @@param $fn */
+    /** @param $fn */
     public function custom(callable $fn, string $message): self
     {
         if (!$fn($this->get_value())) {
@@ -85,7 +85,10 @@ class Validator
 
     private function get_value(): mixed
     {
-        return $this->currentField ? $this->data[$this->currentField] : null;
+        if ($this->currentField && isset($this->data[$this->currentField])) {
+            return $this->data[$this->currentField];
+        }
+        return null;
     }
 
     private function add_error(string $message): void

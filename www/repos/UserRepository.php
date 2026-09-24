@@ -1,6 +1,6 @@
 <?php
 
-/** @@extends Repository<User> */
+/** @extends Repository<User> */
 class UserRepository extends Repository
 {
     #[\Override]
@@ -35,15 +35,18 @@ class UserRepository extends Repository
     }
 
     #[\Override]
-    public function updatePartial(string $id, array $partialData): bool
+    public function update(string $id, array $partialData): bool
     {
-        if (isset($partialData["password"])) {
+        if (
+            isset($partialData["password"]) &&
+            !empty($partialData["password"])
+        ) {
             $partialData["password_hash"] = Crypto::passwordHash(
                 $partialData["password"],
             );
             unset($partialData["password"]);
         }
 
-        return parent::updatePartial($id, $partialData);
+        return parent::update($id, $partialData);
     }
 }

@@ -1,6 +1,6 @@
 <?php
 
-/** @@extends Repository<Vehicle> */
+/** @extends Repository<Vehicle> */
 class VehicleRepository extends Repository
 {
     #[\Override]

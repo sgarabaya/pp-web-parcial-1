@@ -19,14 +19,19 @@ $isUpdate = false;
 $id = Api::get_query_param("id");
 if ($id && !empty($id)) {
     $isUpdate = true;
-    $vehicle = $vehiclesRepo->findById($id)->mapTo();
+    $vehicle = $vehiclesRepo->findById($id);
+    if ($vehicle) {
+        $vehicle = $vehicle->mapTo();
+    }
 }
 ?>
 <main class="center">
     <article style="min-width:600px">
     <header>
         <h2>
-            <? if($isUpdate): ?>Modificar<? else: ?>Crear<? endif ?> Vehiculo</h2>
+            <?php if (
+                $isUpdate
+            ): ?>Modificar<?php else: ?>Crear<?php endif; ?> Vehiculo</h2>
     </header>
     <form action="/actions/stock.php" method="POST">
         <input
@@ -34,13 +39,13 @@ if ($id && !empty($id)) {
             value="<?= $isUpdate ? "PUT" : "POST" ?>"
             class="hidden"
         />
-        <? if($isUpdate): ?>
+        <?php if ($isUpdate): ?>
             <input
                 type="text" name="id"
                 value="<?= $id ?>"
                 class="hidden"
             />
-        <? endif ?>
+        <?php endif; ?>
         <fieldset>
             <input
                 name="brand" type="text"

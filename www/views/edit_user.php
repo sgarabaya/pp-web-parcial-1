@@ -25,14 +25,19 @@ $isUpdate = false;
 $userId = Api::get_query_param("id");
 if ($userId && !empty($userId)) {
     $isUpdate = true;
-    $user = $userRepo->findById($userId)->mapTo();
+    $user = $userRepo->findById($userId);
+    if ($user) {
+        $user = $user->mapTo();
+    }
 }
 ?>
 <main class="center">
     <article style="min-width:600px">
     <header>
         <h2>
-            <? if($isUpdate): ?>Modificar<? else: ?>Crear<? endif ?> Usuario</h2>
+            <?php if (
+                $isUpdate
+            ): ?>Modificar<?php else: ?>Crear<?php endif; ?> Usuario</h2>
     </header>
     <form action="/actions/users.php" method="POST">
         <input
@@ -40,13 +45,13 @@ if ($userId && !empty($userId)) {
             value="<?= $isUpdate ? "PUT" : "POST" ?>"
             class="hidden"
         />
-        <? if($isUpdate): ?>
+        <?php if ($isUpdate): ?>
             <input
                 type="text" name="id"
                 value="<?= $userId ?>"
                 class="hidden"
             />
-        <? endif ?>
+        <?php endif; ?>
         <fieldset>
             <input
                 name="name" type="text"

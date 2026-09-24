@@ -43,7 +43,7 @@ function update()
     }
 
     $userRepository = new UserRepository();
-    if ($userRepository->updatePartial($data["id"], $data)) {
+    if ($userRepository->update($data["id"], $data)) {
         Api::set_message(Messages::operationSuccessful(), "success");
     } else {
         throw new Exception(message: Messages::operationFailed());
@@ -91,7 +91,7 @@ function delete()
         if ($userRepository->delete((string) $id)) {
             Api::set_message(Messages::operationSuccessful(), "success");
         } else {
-            throw new Exception(message: Messages::missingParameter("id"));
+            throw new Exception(message: Messages::operationFailed());
         }
     }
 }
