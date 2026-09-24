@@ -1,9 +1,9 @@
 USE ruta9;
 
 -- passwords: '123', '456', '789'
-SELECT @password_1 = '$argon2id$v=19$m=65536,t=4,p=1$aTd1ZkRFZHJ6QTJUMmhMaA$1cyBJMS2FqDChA02ia87f2MVaLOt14i2edrxDHUCHpU';
-SELECT @password_2 = '$argon2id$v=19$m=65536,t=4,p=1$NDhSLnpXbDBTbWJuaS84Sw$EhkjuhUvy1TgLwSHSrigQGCkDwaGdXrTh+f16rM3vkM';
-SELECT @password_3 = '$argon2id$v=19$m=65536,t=4,p=1$Z1I0dFFRaDl5TVRhN2pabw$DDPoaDMm80yoZiPcCKvLerFuuAX13a53uiTwQQlB75w';
+SET @password_1 = '$argon2id$v=19$m=65536,t=4,p=1$aTd1ZkRFZHJ6QTJUMmhMaA$1cyBJMS2FqDChA02ia87f2MVaLOt14i2edrxDHUCHpU';
+SET @password_2 = '$argon2id$v=19$m=65536,t=4,p=1$NDhSLnpXbDBTbWJuaS84Sw$EhkjuhUvy1TgLwSHSrigQGCkDwaGdXrTh+f16rM3vkM';
+SET @password_3 = '$argon2id$v=19$m=65536,t=4,p=1$Z1I0dFFRaDl5TVRhN2pabw$DDPoaDMm80yoZiPcCKvLerFuuAX13a53uiTwQQlB75w';
 
 INSERT INTO Users
     (id, name, last_name, email, role, password_hash)
