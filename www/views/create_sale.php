@@ -1,7 +1,10 @@
 <?php
 require_once "../autoload.php";
 
-Auth::ensureLoggedIn(); //No hay un rol minimo aca
+//No hay un rol minimo aca
+if (!Auth::user()) {
+    Api::redirect("/login.php");
+}
 
 require_once "../components/header.php";
 require_once "../components/navbar.php";

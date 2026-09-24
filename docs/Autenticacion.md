@@ -1,194 +1,109 @@
-# Autenticación y control de acceso por roles
+# Autenticación y autorización
 
-La autenticación usa **sesiones de PHP**; la autorización es un sistema de **control de acceso por
-roles (RBAC)** con tres roles. Todo vive en `www/utilities/Auth.php`, una clase estática (no
-instanciable).
+## Enfoque
 
----
+Autenticación por **sesiones nativas de PHP** (cookie de sesión), sin tokens
+JWT ni OAuth. La sesión guarda únicamente el `id` del usuario; el objeto
+`User` se reconstruye desde la base por request.
 
-## 1. Estado de sesión
-
-`Auth::load()` — llamado por `autoload.php` en **cada** request — arranca la sesión y cachea la
-identidad del usuario actual en propiedades estáticas:
-
-```php
-session_start();
-self::$userId   = Api::safe_get($_SESSION, "user.id");
-self::$userRole = Api::safe_get($_SESSION, "user.role");
-self::$userName = Api::safe_get($_SESSION, "user.name");
+```
+login.php (POST email + password)
+  └─ Auth::login()
+       ├─ UserRepository::findByEmail()       → User | null
+       ├─ Crypto::passwordVerify(pass, hash)  → Argon2id
+       └─ $_SESSION["user.id"] = user->getId()
 ```
 
-| Key de sesión | Contenido | Se cachea como |
-|---------------|-----------|----------------|
-| `user.id`   | UUID del usuario | `Auth::$userId` → `Auth::getUserId()` |
-| `user.role` | `ADMIN` \| `STOCK` \| `SALES` | `Auth::$userRole` → `Auth::hasRole()`, guards |
-| `user.name` | `"<primera-letra>.<apellido>"` (p. ej. `F.Flores`) | `Auth::$userName` → `Auth::getName()` |
+- `Auth::load()`: llamado desde `autoload.php` en cada entrada; arranca la
+  sesión y lee `user.id` del `$_SESSION`.
+- `Auth::user()`: carga perezosa del usuario por `UserRepository::findById()`
+  y lo cachea en el atributo estático `Auth::$user` (un solo request → una sola
+  consulta).
+- `logout.php`: `session_destroy()` + redirect a `/login.php`.
 
-El `user.name` de la sesión se arma al momento del login: `substr($user->getName(), 0, 1) . "." .
-$user->getLastName()`. Solo se usa para el saludo de la barra lateral.
+## Contraseñas
 
----
+- Hash y verificación con **Argon2id** (`PASSWORD_ARGON2ID`), parámetros por
+  defecto de PHP (`v=19, m=65536, t=4, p=1` según los hashes seed).
+- Al crear/editar un usuario, el hash se calcula en la aplicación
+  (`Crypto::passwordHash()`); `UserRepository::update()` hashea el campo
+  `password` antes de delegar en el update genérico.
 
-## 2. Roles
+## Guardias
 
-Definidos por el `ENUM` de `Users.role` (ver [Modelos de Datos.md](Modelos%20de%20Datos.md#users)):
+- `Auth::requireRole(string $role)`: usado por actions y vistas restringidas.
+  - Sin sesión → redirect a `/login.php`.
+  - `"ANY"` → pasa (index).
+  - `!user->satisfies(role)` → redirect a `/index.php` (no hay 403; el fallo
+    redirige en silencio).
+- `User::satisfies()` está polimorfizado:
+  - `Employee`: `role === $requiredRole` (igualdad estricta).
+  - `Administrator`: siempre `true` (**el admin pasa toda guardia**).
+- Autorización de interfaz, delegada también al modelo:
+  - `User::canSee(page)` decide qué entradas muestra el navbar.
+  - `User::canEdit(entity)` decide qué botones de acción se renderizan
+    (stock: “Agregar/Editar/Eliminar” y “Registrar venta”).
 
-| Rol | Significado |
-|-----|-------------|
-| `ADMIN` | Acceso total: gestión de usuarios + todo lo demás |
-| `STOCK` | Inventario: ver y editar vehículos (alta / modificación / baja) |
-| `SALES` | Ventas: ver y registrar ventas, ver el stock |
+## Matriz de roles
 
-El rol `ADMIN` es un **superconjunto**: todos los chequeos de rol pasan automáticamente para el
-admin.
+Lectura (GET):
 
----
+| Página                    | ADMIN | STOCK | SALES |
+| ------------------------- | :---: | :---: | :---: |
+| `index.php` (Panel)       | ✅    | ✅    | ✅    |
+| `views/stock.php`         | ✅    | ✅    | ✅    |
+| `views/create_sale.php`   | ✅    | ✅    | ✅    |
+| `views/sales.php`         | ✅    | ✅*   | ✅    |
+| `views/users.php`         | ✅    | ❌    | ❌    |
+| `views/edit_user.php`     | ✅    | ❌    | ❌    |
+| `views/edit_stock.php`    | ✅    | ✅*   | ❌    |
 
-## 3. La API de `Auth`
+\* `views/sales.php` exige `requireRole("SALES")`; como `Administrator::satisfies()`
+siempre devuelve `true`, el admin entra. Idem `views/edit_stock.php` con
+`requireRole("STOCK")`. `stock.php` y `create_sale.php` solo piden usuario
+autenticado (la restricción real está al enviar el formulario).
 
-| Método | Propósito | Redirect ante fallo |
-|--------|-----------|---------------------|
-| `load()` | Arranca la sesión + cachea al usuario actual (lo llama `autoload.php`) | — |
-| `login(): bool` | Valida email/contraseña contra la base y puebla la sesión | — |
-| `ensureLoggedIn()` | Exige *cualquier* usuario logueado | `/login.php` |
-| `user()` | Hidrata y cachea el objeto `User` actual (una query por request); las decisiones de permiso se delegan en él | — |
-| `requireRole(string $role)` | Exige un rol específico; delega en `User::satisfies()`; acepta `"ANY"` para "cualquier usuario logueado" | `/login.php` si es anónimo, `/index.php` si es otro rol |
-| `canSee(string $page)` | No bloqueante: ¿este rol puede ver esta sección del nav? delega en `User::canSee()` | filtra la barra lateral |
-| `canEdit(string $obj)` | No bloqueante: ¿este rol puede hacer las acciones de esta entidad? delega en `User::canEdit()` | filtra botones |
-| `hasRole(string $role)` | Comparación simple (se usa para UI según rol, p. ej. la tarjeta de finanzas del admin) | — |
-| `getName()` / `getUserId()` | Accesors del usuario en caché | — |
+Escritura (POST, actions):
 
----
+| Action             | ADMIN | STOCK | SALES | Operaciones |
+| ------------------ | :---: | :---: | :---: | ----------- |
+| `actions/users.php`| ✅    | ❌    | ❌    | crear / editar / eliminar usuarios |
+| `actions/stock.php`| ✅    | ✅    | ❌    | crear / editar / eliminar vehículos |
+| `actions/sale.php` | ✅    | ❌    | ✅    | registrar venta |
 
-## 4. Matriz de guards
+UI condicionada en `views/stock.php`: la columna de acciones muestra botones de
+edición/eliminación solo si `canEdit("STOCK")`, y el botón “Registrar venta”
+solo si `canEdit("SALES")`. Con `Employee`, `canEdit(entity)` es
+`role === entity`; con `Administrator` siempre `true` (ve todos los botones).
 
-### Guards a nivel de ruta (aplicación dura)
+Visibilidad del menú (navbar) vía `canSee`:
 
-Toda página/acción exige su rol mínimo antes de hacer nada:
+| Entrada   | ADMIN | STOCK | SALES |
+| --------- | :---: | :---: | :---: |
+| Resumen   | ✅    | ✅    | ✅    |
+| Ventas    | ✅    | ❌    | ✅    |
+| Inventario| ✅    | ✅    | ✅    |
+| Empleados | ✅    | ❌    | ❌    |
 
-| Página | Guard | Quién entra |
-|--------|-------|-------------|
-| `index.php` (panel) | `Auth::ensureLoggedIn()` | cualquier usuario logueado |
-| `views/stock.php` | `Auth::ensureLoggedIn()` | cualquier usuario logueado (solo lectura) |
-| `views/create_sale.php` | `Auth::ensureLoggedIn()` | cualquier usuario logueado |
-| `actions/stock.php` (alta/modificación/baja) | `Auth::requireRole("STOCK")` | `ADMIN`, `STOCK` |
-| `views/edit_stock.php` | `Auth::requireRole("STOCK")` | `ADMIN`, `STOCK` |
-| `views/sales.php` | `Auth::requireRole("SALES")` | `ADMIN`, `SALES` |
-| `actions/sale.php` | `Auth::requireRole("SALES")` | `ADMIN`, `SALES` |
-| `views/users.php` | `Auth::requireRole("ADMIN")` | solo `ADMIN` |
-| `views/edit_user.php` | `Auth::requireRole("ADMIN")` | solo `ADMIN` |
-| `actions/users.php` | `Auth::requireRole("ADMIN")` | solo `ADMIN` |
+## Usuarios (demo)
 
-Semántica de `requireRole()` — la decisión final la toma el modelo vía `User::satisfies()`:
+| Email                 | Rol   | Password |
+| --------------------- | ----- | -------- |
+| `admin@ruta9.ar`      | ADMIN | `admin`  |
+| `jorge.perez@ruta9.ar`| STOCK | `jorge`  |
+| `florencia.flores@ruta9.ar` | SALES | `flor` |
+| `enzo.garcia@ruta9.ar`| SALES | `enzo`   |
+| `elva.bozzo@ruta9.ar` | SALES | `elva`   |
 
-```php
-public static function requireRole(string $required_role): void
-{
-    $user = self::user();                   // hidrata + cachea el User actual
-    if (!$user) Api::redirect("/login.php"); // anónimo
+## Consideraciones de seguridad (estado actual)
 
-    if ($required_role === "ANY") return;    // cualquier usuario logueado pasa
-
-    if (!$user->satisfies($required_role)) {
-        Api::redirect("/index.php");         // rol equivocado
-    }
-}
-```
-
-`Employee::satisfies($role)` compara el rol propio contra el exigido (heredado de `User`);
-`Administrator::satisfies()` siempre devuelve `true` — es la forma polimórfica del "admin es
-superconjunto".
-
-### Filtrado a nivel de UI (aplicación blanda)
-
-La barra lateral oculta las secciones que el rol no puede usar, y las páginas ocultan los botones
-que el rol no puede tocar. Es azúcar de presentación encima de los guards duros de arriba.
-
-**`Auth::canSee($page)`** — controla las entradas de la navbar; delega en el modelo:
-
-```php
-public static function canSee(string $page): bool
-{
-    //La matriz de permisos vive en el modelo (User::canSee).
-    return self::user()?->canSee($page) ?? false;
-}
-```
-
-La matriz vive en los modelos: `Employee::canSee()` responde `OVERVIEW`/`STOCK`/`SALES`/`USERS`
-según el rol propio del empleado, y `Administrator::canSee()` devuelve `true` siempre. La corrección
-que antes vivía en `Auth` (un empleado `STOCK` no ve la entrada "Ventas") ahora es parte de esa
-matriz.
-
-Layout del nav según rol:
-
-| Entrada del nav | Vista | `ADMIN` | `STOCK` | `SALES` |
-|-----------------|-------|:------:|:-------:|:-------:|
-| Resumen (panel) | `index.php` | ✅ | ✅ | ✅ |
-| Ventas | `views/sales.php` | ✅ | ❌ | ✅ |
-| Inventario | `views/stock.php` | ✅ | ✅ | ✅ |
-| Empleados | `views/users.php` | ✅ | ❌ | ❌ |
-
-> **Nota:** `canSee()` es solo presentacional — decide qué *muestra* la barra lateral, no qué
-> *permiten* las rutas. Hoy están alineadas (un `STOCK` no ve la entrada de Ventas), pero la matriz
-> de rutas de arriba es la que manda de verdad.
-
-**`Auth::canEdit($obj)`** — controla los botones de acción de una página; delega en el modelo:
-
-```php
-public static function canEdit(string $obj): bool
-{
-    //La matriz de permisos vive en el modelo (User::canEdit).
-    return self::user()?->canEdit($obj) ?? false;
-}
-```
-
-`Employee::canEdit($entity)` responde `true` solo si el rol propio coincide con la entidad (`STOCK` o
-`SALES`); `Administrator::canEdit($entity)` siempre `true`.
-
-Dónde se usa:
-
-- `views/stock.php` — los botones "Agregar/Editar/Eliminar Vehiculo" se muestran solo si
-  `canEdit("STOCK")`; el botón "vender este vehículo" solo si `canEdit("SALES")`.
-- Comportamiento efectivo por rol en el listado de stock:
-
-  | Acción | `ADMIN` | `STOCK` | `SALES` |
-  |--------|:------:|:-------:|:-------:|
-  | Ver inventario | ✅ | ✅ | ✅ |
-  | Agregar / editar / eliminar vehículo | ✅ | ✅ | ❌ |
-  | Crear venta desde una fila | ✅ | ❌ | ✅ |
-
----
-
-## 5. Resumen de login / logout
-
-- `login.php` — en GET renderiza el formulario; en POST llama a `Auth::login()`; éxito → `/index.php`,
-  error → flash "Datos incorrectos" y de vuelta a `/login.php` (PRG).
-- `logout.php` — `session_destroy()` y redirect a `/login.php`. A propósito no usa `autoload.php`
-  porque el cierre de sesión no necesita nada más.
-- `Auth::login()` — busca por email (`UserRepository::findByEmail`, SQL parametrizado) y verifica con
-  `Crypto::passwordVerify()` (Argon2id). Solo los usuarios verificados reciben entradas de sesión.
-
----
-
-## 6. Observaciones de seguridad
-
-Lo bueno:
-
-- Todas las queries son parametrizadas (prepared statements de PDO con
-  `ATTR_EMULATE_PREPARES = false`).
-- Las contraseñas se guardan solo como hash Argon2id; un campo de contraseña vacío al editar un
-  usuario **no** pisa el hash existente (`UserRepository::update()` protege con `isset && !empty`).
-- El `user_id` de las ventas sale de la sesión, nunca del formulario.
-- El `update()` genérico whitelistea columnas por repositorio, bloqueando mass-assignment de
-  `id`/`created`/`password_hash`.
-- Las páginas de admin se protegen del lado del servidor (no solo ocultando la entrada del nav).
-
-Para tener en cuenta / mejorar:
-
-- La emulación de `METHOD` y los chequeos de rol dependen de la cookie de sesión; no hay token CSRF
-  en los formularios de mutación.
-- `logout.php` llama a `session_destroy()` sin limpiar `$_SESSION` primero (funciona, pero no
-  invalida la cookie del lado del cliente).
-- El listado de usuarios es solo-admin, pero la baja de un vehículo (stock) tiene un dialog de
-  confirmación puramente client-side — la protección real es el guard `requireRole` de la acción,
-  que es el que importa.
+- Los formularios **no usan tokens CSRF**; la sesión se destruye por GET en
+  `logout.php` (vulnerable a logout CSRF).
+- El login **no tiene rate limiting** ni bloqueo por intentos; ante datos
+  inválidos devuelve el mensaje genérico “Datos incorrectos”.
+- Las credenciales de la base (`ruta9`/`ruta9-pwd`) viajan en texto plano en el
+  `docker-compose.yml` y por variables de entorno, aptas solo para desarrollo.
+- Todos los querys usan **prepared statements** (`PDO::prepare`), sin
+  concatenación de entrada del usuario. La única interpolación es de nombres de
+  tabla/columna provistos por el propio código (no por el usuario), vía
+  `sprintf` en `Repository`.

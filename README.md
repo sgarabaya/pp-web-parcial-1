@@ -1,60 +1,109 @@
-# Ruta 9 — Documentación
+# Ruta 9
 
-**Ruta 9** es un sistema de gestión web para una agencia de autos, hecho con **PHP orientado a
-objetos**. Te deja que un equipo de empleados (con distintos roles) entre al sistema, gestione el
-inventario de vehículos, registre ventas y — si sos administrador — administre los usuarios. La app
-corre en **Docker** (Apache + PHP) contra una base **MySQL** y sigue una arquitectura liviana tipo
-MVC, hecha a mano, sin frameworks.
+Sistema web de gestión para una concesionaria de vehículos. Permite administrar
+empleados, inventario de vehículos y ventas, con un panel de control que resume
+métricas operativas. Es una aplicación PHP server-side rendering, sin framework,
+sobre MySQL, distribuida con Docker.
 
-Es un trabajo práctico universitario (`TP.md` en la raíz del repo tiene la consigna original). Esta
-documentación explica cómo funciona el código de verdad.
+## Descripción general
 
-## Arranque rápido
+- **Dominio**: agencia / concesionaria de autos (0km). Tres áreas: administración,
+  inventario (stock) y ventas.
+- **Usuarios y roles**: `ADMIN`, `STOCK` y `SALES`, con control de acceso por
+  página y por acción.
+- **Funcionalidades**:
+  - Login/logout por sesión con contraseñas hasheadas (Argon2id).
+  - CRUD de usuarios (solo `ADMIN`): crear, editar, eliminar.
+  - CRUD de vehículos (rol `STOCK`): marca, modelo, año, precio y unidades.
+  - Registro de ventas (rol `SALES`): descontar stock automáticamente y en
+    transacción.
+  - Panel de control con métricas (total recaudado, unidades disponibles) y
+    gráfico de ventas por empleado (Chart.js).
+- **Interfaz**: HTML renderizado en servidor + CSS propio (tema oscuro), iconos
+  Lucide y Chart.js vía CDN. Sin framework de frontend ni compilación.
+
+## Estructura del proyecto
+
+```
+.
+├── docker-compose.yml          # web (Apache+PHP) y db (MySQL)
+├── Dockerfile                  # php:apache + pdo_mysql + mod_rewrite
+├── migrations/
+│   ├── 0001_InitialMigration.sql   # esquema + usuario admin seed
+│   └── DemoSeed.sql                # datos de demostración
+└── www/
+    ├── index.php               # panel de control
+    ├── login.php / logout.php
+    ├── autoload.php            # autoloader + inicio de sesión
+    ├── actions/                # endpoints POST (sale, stock, users)
+    ├── views/                  # pantallas (create_sale, sales, stock, ...)
+    ├── models/                 # clases de dominio (User, Vehicle, Sale, ...)
+    ├── repos/                  # capa de persistencia (Repository, ...)
+    ├── utilities/              # Auth, Api, Config, Crypto, Messages, Validator
+    ├── components/             # header, navbar, footer
+    ├── public/                 # style.css, charts.js, favicon
+    └── tests/                  # pruebas manuales
+```
+
+Ver `docs/` para el detalle.
+
+## Requisitos de software
+
+- **PHP 8.3+** (usa named arguments, constructor property promotion y el
+  atributo `#[\Override]`, introducido en PHP 8.3).
+- **ext-pdo_mysql** habilitado.
+- **Soporte de Argon2id** en `password_hash` (compilado por defecto en las
+  imágenes oficiales `php:apache`).
+- **MySQL 8.x** (o compatible, ej. MariaDB 10.6+) con `pdo_mysql`.
+- **Apache** con `mod_rewrite` (ya habilitado en el `Dockerfile`; el `.htaccess`
+  define las páginas de error). También funciona bajo cualquier server que sirva
+  archivos PHP.
+- **Docker + Docker Compose** (opcional, es la vía recomendada para correr el
+  proyecto).
+- Navegador moderno (usa `<dialog>`, trailing commas en JS y CSS moderno);
+  conexión a Internet para los CDN (fuentes, Lucide, Chart.js).
+
+## Puesta en marcha
 
 ```bash
-# Desde la raíz del repo
 docker compose up --build
 ```
 
-Y listo, abrí <http://localhost:8080> y entrá con alguna de las cuentas precargadas:
+- Web: http://localhost:8080
+- MySQL: `localhost:3306` (usuario `ruta9` / contraseña `ruta9-pwd`, db `ruta9`)
 
-| Rol    | Email                    | Contraseña |
-|--------|--------------------------|------------|
-| Admin  | `admin@ruta9.ar`         | `admin`    |
-| Stock  | `jorge.perez@ruta9.ar`   | `jorge`    |
-| Ventas | `florencia.flores@ruta9.ar` | `flor`   |
+Las migraciones de `migrations/` se ejecutan automáticamente la primera vez que
+se inicializa el contenedor de la base (`/docker-entrypoint-initdb.d`), en orden
+alfabético (`0001_InitialMigration.sql` y luego `DemoSeed.sql`). La base no tiene
+volumen persistente propio: si se elimina el contenedor de `db`, se pierden los
+datos.
 
-En el primer arranque, el contenedor de MySQL ejecuta solo el primer script de migración/seed que
-está montado desde `./migrations` (los detalles en [Modelos de Datos.md](Modelos%20de%20Datos.md#migraciones-y-datos-de-demo)).
+### Credenciales por defecto
 
-## Índice de la documentación
+| Email                 | Password | Rol   |
+| --------------------- | -------- | ----- |
+| `admin@ruta9.ar`      | `admin`  | ADMIN |
+| `jorge.perez@ruta9.ar`| `jorge`  | STOCK |
+| `florencia.flores@ruta9.ar` | `flor` | SALES |
+| `enzo.garcia@ruta9.ar`| `enzo`   | SALES |
+| `elva.bozzo@ruta9.ar` | `elva`   | SALES |
 
-| Archivo | Qué cubre |
-|---------|-----------|
-| [Arquitectura.md](Arquitectura.md) | La arquitectura a alto nivel: Docker/Docker Compose/MySQL, la estructura del código por capas, el flujo de una request y los patrones de una mirada. |
-| [Patrones.md](Patrones.md) | En detalle los patrones de diseño: Repository, método plantilla, mapeo de modelos, clases de servicios estáticas, validación fluida, PRG, etc. |
-| [Ciclo de Vida.md](Ciclo%20de%20Vida.md) | El funcionamiento interno: secuencia de arranque, autenticación y recorridos paso a paso del login, los ABM y el registro de ventas. |
-| [Modelos de Datos.md](Modelos%20de%20Datos.md) | El esquema de MySQL, las migraciones, los datos de demo y las credenciales. |
-| [Autenticacion.md](Autenticacion.md) | Cómo funcionan la autenticación y el control de acceso por roles, con la matriz completa de permisos. |
+## Configuración por variables de entorno
 
-## Resumen de funcionalidades
+| Variable  | Descripción           | Ejemplo (docker-compose) |
+| --------- | --------------------- | ------------------------ |
+| `DB_HOST` | Host de MySQL         | `db`                     |
+| `DB_NAME` | Nombre de la base     | `ruta9`                  |
+| `DB_USER` | Usuario de la base    | `ruta9`                  |
+| `DB_PWD`  | Contraseña de la base | `ruta9-pwd`              |
 
-- **Login / logout** con email + contraseña (las contraseñas se guardan hasheadas con Argon2id).
-- **Acceso por roles**: `ADMIN`, `STOCK` y `SALES`; el admin puede hacer todo.
-- **Gestión de vehículos (stock)**: alta, listado, modificación y baja.
-- **Ventas**: registrar una venta contra un vehículo (precio, cliente, medio de pago); el stock se
-  descuenta de forma atómica dentro de una transacción de la base.
-- **Gestión de usuarios** (solo admin): alta, listado, modificación y baja de empleados.
-- **Panel de control** (`index.php`): muestra el stock disponible, el total histórico recaudado
-  (admin), un contador de visualizaciones del panel por sesión (persiste en `$_SESSION`) y un
-  gráfico de torta (Chart.js) con los ingresos y la cantidad de ventas por empleado.
-- **Toasts de mensajes** (flash) y una barra lateral filtrada por rol.
+Las lee `Config` desde el entorno real (`getenv`). No hay `.env` local: la
+configuración se inyecta vía Docker Compose.
 
-## Stack tecnológico
+## Documentación
 
-- **PHP 8.3+** (usa promoción de propiedades en el constructor, argumentos nombrados y el atributo
-  `#[\Override]`)
-- **Apache** con `mod_rewrite` (imagen oficial `php:apache` de Docker)
-- **MySQL** (latest) con el driver PDO de MySQL
-- **Docker Compose** para orquestar todo localmente
-- **HTML/CSS/JS** pelado del lado del cliente (íconos de Lucide, sin framework)
+- [Arquitectura](docs/Arquitectura.md)
+- [Autenticación](docs/Autenticacion.md)
+- [Ciclo de vida de la API](docs/Ciclo%20de%20Vida.md)
+- [Modelos de datos](docs/Modelos%20de%20Datos.md)
+- [Patrones de diseño](docs/Patrones.md)

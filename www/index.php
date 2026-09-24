@@ -2,7 +2,10 @@
 require_once "autoload.php";
 
 // Validar autenticación
-Auth::ensureLoggedIn();
+$user = Auth::user();
+if (!$user) {
+    Api::redirect("/login.php");
+}
 
 // Iniciar conexión
 $db = Database::connect();

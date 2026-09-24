@@ -1,142 +1,168 @@
-# Modelo de datos
+# Modelos de datos
 
-La base es **MySQL**, esquema `ruta9`, manejada enteramente por los archivos SQL de `migrations/` y
-accedida a través de la capa PDO que se describe en [Patrones.md](Patrones.md#4-singleton--database).
+Base: **MySQL** (esquema en `migrations/0001_InitialMigration.sql`). Todas las
+tablas usan `VARCHAR(36)` como PK (UUID v4 generado en la aplicación) y
+`created DATETIME DEFAULT CURRENT_TIMESTAMP`. Hay dos migraciones:
+`0001_InitialMigration.sql` (esquema + admin) y `DemoSeed.sql` (datos demo),
+ejecutadas en orden alfabético al inicializar el contenedor de la base.
 
----
-
-## 1. Panorama de entidades y relaciones
+## Esquema relacional
 
 ```
-┌────────────────────┐        ┌────────────────────┐        ┌────────────────────┐
-│       Users        │        │      Vehicles      │        │       Sales        │
-├────────────────────┤        ├────────────────────┤        ├────────────────────┤
-│ id        VARCHAR(36) PK    │ id        VARCHAR(36) PK    │ id        VARCHAR(36) PK
-│ name      VARCHAR(40)       │ brand     VARCHAR(40)       │ user_id   VARCHAR(36) FK ──► Users.id
-│ last_name VARCHAR(40)       │ model     VARCHAR(40)       │ vehicle_id VARCHAR(36) FK ─► Vehicles.id
-│ email     VARCHAR(40) UNIQUE│ year      INT               │ paid_amount DECIMAL(10,2)
-│ password_hash VARCHAR(255)  │ price     DECIMAL(10,2)     │ client_name VARCHAR(40)
-│ role      ENUM(…)           │ stock     INT               │ client_contact VARCHAR(40)
-│ created   DATETIME          │ created   DATETIME          │ payment_method VARCHAR(40)
-└────────────────────┘        └────────────────────┘        │ created   DATETIME
-                                                            └────────────────────┘
+┌────────────┐  1        N  ┌────────────┐
+│   Users    │◄─────────────│   Sales    │
+│  id (PK)   │              │  id (PK)   │
+│  name      │              │ user_id (FK) ──► Users.id
+│  last_name │              │ vehicle_id(FK) ─► Vehicles.id
+│  email (UQ)│              │ paid_amount
+│  password_hash            │ client_name
+│  role (ENUM)              │ client_contact
+│  created   │              │ payment_method
+└────────────┘              │ created
+                            └────────────┘
+┌────────────┐  1        N  ▲
+│  Vehicles  │◄─────────────┘
+│  id (PK)   │
+│  brand     │
+│  model     │
+│  year      │
+│  price     │
+│  stock     │
+│  created   │
+└────────────┘
 ```
 
-Tres tablas y dos relaciones (`Sales.user_id → Users.id`, `Sales.vehicle_id → Vehicles.id`), las
-dos con foreign keys. Toda primary key es un **UUID de 36 caracteres** generado en
-`Crypto::uuid4()`, no un auto-increment entero.
+### `Users`
 
----
+| Columna         | Tipo                         | Notas |
+| --------------- | ---------------------------- | ----- |
+| `id`            | VARCHAR(36) PK               | UUID v4 |
+| `name`          | VARCHAR(40) NOT NULL         | |
+| `last_name`     | VARCHAR(40) NOT NULL         | |
+| `email`         | VARCHAR(40) UNIQUE NOT NULL  | login |
+| `password_hash` | VARCHAR(255) NOT NULL        | Argon2id |
+| `role`          | ENUM('ADMIN','STOCK','SALES') NOT NULL DEFAULT 'SALES' | |
+| `created`       | DATETIME DEFAULT CURRENT_TIMESTAMP | |
 
-## 2. Tablas
+**Clases**: `User` (abstracta) con subclases `Administrator` y `Employee`.
+`User::fromFields()` despacha por `role` (factory): `ADMIN` → `Administrator`,
+cualquier otro → `Employee`. El rol se valida en el constructor y en el setter
+(`assertValidRole()`).
 
-### Users
+| Rol    | Clase            | `assertValidRole`                         |
+| ------ | ---------------- | ----------------------------------------- |
+| ADMIN  | `Administrator`  | rechaza cualquier rol ≠ `ADMIN`           |
+| STOCK  | `Employee`       | rechaza `ADMIN` (acepta STOCK y SALES)    |
+| SALES  | `Employee`       | rechaza `ADMIN` (acepta STOCK y SALES)    |
 
-| Columna | Tipo | Notas |
-|---------|------|-------|
-| `id` | `VARCHAR(36)` | PK, UUID |
-| `name` | `VARCHAR(40)` NOT NULL | |
-| `last_name` | `VARCHAR(40)` NOT NULL | |
-| `email` | `VARCHAR(40)` UNIQUE NOT NULL | Constraint único — no puede haber dos logins iguales |
-| `password_hash` | `VARCHAR(255)` NOT NULL | Hash Argon2id (ver más abajo) |
-| `role` | `ENUM('ADMIN','STOCK','SALES')` NOT NULL DEFAULT `'SALES'` | Control de acceso por roles |
-| `created` | `DATETIME DEFAULT CURRENT_TIMESTAMP` | |
+### `Vehicles`
 
-**Almacenamiento de contraseñas**: solo se guarda el hash Argon2id que produce `password_hash()`
-(`Crypto::passwordHash`). La verificación se hace con `password_verify()` — la contraseña en texto
-nunca toca la base. Los hashes precargados llevan un comentario `/* pwd:xxx */` para que las demos
-puedan loguearse sin pasar el texto plano en otro archivo.
+| Columna | Tipo                   | Notas |
+| ------- | ---------------------- | ----- |
+| `id`    | VARCHAR(36) PK         | UUID v4 |
+| `brand` | VARCHAR(40) NOT NULL   | |
+| `model` | VARCHAR(40) NOT NULL   | |
+| `year`  | INT NOT NULL           | |
+| `price` | DECIMAL(10,2) NOT NULL | |
+| `stock` | INT NOT NULL DEFAULT 0 | unidades disponibles |
+| `created` | DATETIME DEFAULT CURRENT_TIMESTAMP | |
 
-### Vehicles
+**Clase**: `Vehicle` (propiedades públicas tipadas; `year` → `int`, `price` →
+`float`, `stock` → `int`).
 
-| Columna | Tipo | Notas |
-|---------|------|-------|
-| `id` | `VARCHAR(36)` | PK, UUID |
-| `brand` | `VARCHAR(40)` NOT NULL | |
-| `model` | `VARCHAR(40)` NOT NULL | |
-| `year` | `INT` NOT NULL | El formulario limita entre 1908–2026 |
-| `price` | `DECIMAL(10,2)` NOT NULL | El dinero nunca se guarda como float |
-| `stock` | `INT NOT NULL DEFAULT 0` | Unidades disponibles; se descuenta en cada venta |
-| `created` | `DATETIME DEFAULT CURRENT_TIMESTAMP` | |
+### `Sales`
 
-### Sales
+| Columna          | Tipo                   | Notas |
+| ---------------- | ---------------------- | ----- |
+| `id`             | VARCHAR(36) PK         | UUID v4 |
+| `user_id`        | VARCHAR(36) NOT NULL   | FK → `Users(id)`, vendedor |
+| `vehicle_id`     | VARCHAR(36) NOT NULL   | FK → `Vehicles(id)` |
+| `paid_amount`    | DECIMAL(10,2) NOT NULL | monto efectivamente cobrado |
+| `client_name`    | VARCHAR(40) NOT NULL   | |
+| `client_contact` | VARCHAR(40) NOT NULL   | |
+| `payment_method` | VARCHAR(40) NOT NULL   | `CASH`, `FINANCED`, `EXCHANGE+CASH`, `EXCHANGE+FINANCED` |
+| `created`        | DATETIME DEFAULT CURRENT_TIMESTAMP | |
 
-| Columna | Tipo | Notas |
-|---------|------|-------|
-| `id` | `VARCHAR(36)` | PK, UUID |
-| `user_id` | `VARCHAR(36)` NOT NULL | FK → `Users.id` (`fk_sale_user`) |
-| `vehicle_id` | `VARCHAR(36)` NOT NULL | FK → `Vehicles.id` (`fk_sale_vehicle`) |
-| `paid_amount` | `DECIMAL(10,2)` NOT NULL | Lo que pagó el cliente |
-| `client_name` | `VARCHAR(40)` NOT NULL | |
-| `client_contact` | `VARCHAR(40)` NOT NULL | Teléfono o email |
-| `payment_method` | `VARCHAR(40)` NOT NULL | Uno de `CASH`, `FINANCED`, `EXCHANGE+CASH`, `EXCHANGE+FINANCED` (no hay `ENUM` en SQL; el conjunto válido lo definen el formulario y la función de mapeo de la app) |
-| `created` | `DATETIME DEFAULT CURRENT_TIMESTAMP` | Ordena el listado de ventas (`fetchDetails()` usa `ORDER BY S.created DESC`); el seed genera valores random entre 2024-01-01 y hoy |
+FKs con `CONSTRAINT fk_sale_user`/`fk_sale_vehicle`. No hay `ON DELETE`:
+borrar un usuario/vehículo con ventas hará fallar el FK (los deletes de
+`Repository::delete()` no contemplan esto).
 
----
+**Clase**: `Sale`. **Modelo de lectura**: `SaleView` (usada para listar:
+`user` y `vehicle` llegan concatenados del JOIN; agrega `suggestedPrice` =
+precio de lista del vehículo, para comparar contra `paid_amount`).
 
-## 3. Migraciones y datos de demo
+### `payment_method` (valores libres en DB)
 
-Docker Compose monta `./migrations` en `/docker-entrypoint-initdb.d` de la imagen de MySQL. Con un
-**volumen de datos nuevo**, la imagen ejecuta los scripts en orden alfabético, así que:
+| Valor             | Etiqueta en UI (`views/sales.php`) |
+| ----------------- | ---------------------------------- |
+| `CASH`            | Efectivo                           |
+| `FINANCED`        | Financiado                         |
+| `EXCHANGE+CASH`   | Canje y Efectivo                   |
+| `EXCHANGE+FINANCED` | Canje y Financiado                |
 
-### `0001_InitialMigration.sql` — esquema + admin
+El campo se valida como requerido pero sus valores no se restringen en el
+backend (`Validator` no valida contra el conjunto; la UI usa `<select>`).
 
-1. `CREATE DATABASE IF NOT EXISTS ruta9;` + `USE ruta9;` (también cubierto por la variable
-   `MYSQL_DATABASE` del compose).
-2. Crea las tres tablas (`CREATE TABLE IF NOT EXISTS`).
-3. Seed del usuario **admin** con el UUID *fijo* `00000000-0000-0000-0000-000000000000`:
+## Mapeo objeto-relacional
 
-   | Email | Contraseña | Rol |
-   |-------|------------|-----|
-   | `admin@ruta9.ar` | `admin` | `ADMIN` |
+Cada entidad implementa dos métodos estáticos/instancia que definen la
+conversión entre fila y objeto:
 
-   `INSERT IGNORE` significa que re-ejecutar el script no lo duplica.
+- **`mapFrom(array $row): self`** — fila de la DB → objeto de dominio. Aplica
+  coerciones: `(int)` para `year`/`stock`, `(float)` para `price`/`paidAmount`
+  y `new DateTimeImmutable()` para `created`.
+- **`mapTo(): array`** — objeto → fila. Serializa `created` en formato `ATOM`
+  (ej. `2026-09-24T12:00:00+00:00`), compatible con `DATETIME` de MySQL dada la
+  zona horaria por defecto del servidor.
 
-### `DemoSeed.sql` — datos de demo
+| Clase          | mapFrom (DB)                                  | mapTo (fila)                                  |
+| -------------- | --------------------------------------------- | --------------------------------------------- |
+| `User` (y subs.) | `id, name, last_name, email, password_hash, role, created` | columnas homónimas + `created` ATOM; despacha la subclase por rol |
+| `Vehicle`      | `id, brand, model, year(int), price(float), stock(int), created` | idem |
+| `Sale`         | `id, user_id, vehicle_id, paid_amount(float), client_name, client_contact, payment_method, created` | idem |
+| `SaleView`     | `id, user, vehicle, paid_amount, suggested_price, client_name, client_contact, payment_method, created` | — (solo lectura) |
 
-Agrega (todo `INSERT IGNORE` / idempotente):
+`SaleView::mapFrom` espera los alias del JOIN de `SaleRepository::fetchDetails()`
+(`user`, `vehicle`, `suggested_price`).
 
-- **4 empleados** con `UUID()` aleatorios:
+## Capa de repositorios
 
-  | Nombre | Email | Rol | Contraseña |
-  |--------|-------|-----|------------|
-  | Jorge Perez | `jorge.perez@ruta9.ar` | `STOCK` | `jorge` |
-  | Florencia Flores | `florencia.flores@ruta9.ar` | `SALES` | `flor` |
-  | Enzo Garcia | `enzo.garcia@ruta9.ar` | `SALES` | `enzo` |
-  | Elva Bozzo | `elva.bozzo@ruta9.ar` | `SALES` | `elva` |
+| Repositorio           | Tabla      | `getColumns()` (partial update)                    |
+| --------------------- | ---------- | -------------------------------------------------- |
+| `UserRepository`      | `Users`    | `name, last_name, email, password_hash, role`      |
+| `VehicleRepository`   | `Vehicles` | `brand, model, year, price, stock`                 |
+| `SaleRepository`      | `Sales`    | `user_id, vehicle_id, paid_amount, client_name, client_contact, payment_method` |
 
-- **35 vehículos** de varias marcas (Toyota, Honda, Ford, Tesla, VW, Audi, BMW, …) con precios y
-  stocks realistas. Dos de ellos (`Nissan Rogue`, `Toyota Highlander`) tienen `stock = 0` a
-  propósito, para que se vea el estado "sin stock" en la UI.
-- **40 ventas** generadas con una tabla temporal + `INSERT … SELECT … RAND()`: empleados de SALES
-  random, vehículos random, `paid_amount` random entre 10 000 y 50 000, método de pago random y una
-  lista de clientes/contactos verosímiles. El `created` también sale random, entre `2024-01-01` y el
-  presente — así el listado ordenado por fecha y el gráfico del panel tienen datos variados.
+- `Repository` (abstracto genérico) provee `findById`, `findAll`, `findBy`,
+  `create`, `update` (parcial por whitelist de `getColumns()`), `delete`.
+- `UserRepository::update()` override: si llega `password`, lo hashea a
+  `password_hash` y descarta el campo original.
+- `SaleRepository` agrega queries ad-hoc:
+  - `registerSale(Sale $sale)`: reglas de dominio + transacción (ver
+    [Ciclo de Vida](Ciclo%20de%20Vida.md#registro-de-venta-salephp--salerepositoryregistersale)).
+  - `fetchDetails(): SaleView[]`: `INNER JOIN` de `Sales` con `Users` y
+    `Vehicles`, ordenado por fecha descendente.
+  - `fetchSalesOverview()`: `GROUP BY` usuario → `salesCount`, `totalAmount`
+    (alimenta el gráfico del dashboard).
 
-> **Re-aplicar migraciones**: como los scripts de init solo corren con un volumen de datos nuevo,
-> cambiar el esquema más adelante implica recrear el volumen de MySQL, p. ej.
-> `docker compose down -v && docker compose up --build`. No hay un runner de migraciones en la app.
+## Queries agregadas del dashboard
 
----
+`MetricasDashboard` (estático, recibe `PDO` por parámetro):
 
-## 4. Cómo mapea el código al esquema
+| Método                              | Consulta                                              |
+| ----------------------------------- | ----------------------------------------------------- |
+| `obtenerTotalRecaudado(PDO)`        | `SELECT SUM(paid_amount) FROM Sales` (todo el histórico) |
+| `obtenerCantidadVehiculosDisponibles(PDO)` | `SELECT SUM(stock) FROM Vehicles` (suma de unidades, no de filas) |
+| `get_visualizaciones_sesion()`      | contador en `$_SESSION["visualizaciones"]` (sin DB)   |
 
-| Nombre SQL (snake_case) | Modelo PHP | Mapeo |
-|--------------------------|------------|-------|
-| `Users` | `User` (abstracta → `Administrator` / `Employee`) | `UserRepository` → `User::mapFrom()/mapTo()` (la fábrica despacha la subclase por `role`) |
-| `Vehicles` | `Vehicle` | `VehicleRepository` → `Vehicle::mapFrom()/mapTo()` |
-| `Sales` | `Sale` (+ read model `SaleView`) | `SaleRepository` → `Sale::mapFrom()/mapTo()`; `fetchDetails()` arma `SaleView` con el join de 3 tablas y ordena por `created DESC`; `fetchSalesOverview()` agrega por empleado (`COUNT`/`SUM`) para el gráfico del panel |
+## Notas
 
-Detalles del mapeo:
-
-- `mapFrom()` convierte filas `VARCHAR`/`DATETIME` en propiedades tipadas (`(int)`, `(float)`,
-  `DateTimeImmutable`).
-- `mapTo()` serializa de vuelta a arrays snake_case para `INSERT`/`UPDATE`.
-- Los updates parciales se whitelistean por repo (`getColumns()`), así las columnas fijas
-  (`id`, `created`, `password_hash` salvo manejo explícito) nunca entran en un update genérico.
-  `UserRepository::update()` trata el caso especial de un `password` no vacío hasheándolo dentro de
-  `password_hash` antes de delegar en el update genérico.
-
-La página de listado de ventas (`views/sales.php`) renderiza filas de `SaleView` (incluye la columna
-"Fecha" a partir de `created`); el panel combina `MetricasDashboard` (`SUM(paid_amount)`, `SUM(stock)`)
-con el gráfico de `SaleRepository::fetchSalesOverview()` (ingresos y cantidad de ventas por empleado).
+- **IDs**: la PK se genera en PHP (`Crypto::uuid4()`), nunca con
+  `UUID()` server-side salvo en `DemoSeed.sql`.
+- `email` es único; intentar crear un duplicado falla con excepción de
+  integridad que se traduce al mensaje flash genérico.
+- `User::mapFrom()` es el único que despacha a subclases; `UserRepository`
+  siembre devuelve `User` (por eso el `@extends Repository<User>`).
+- El campo `stock` de `Vehicles` se decrementa al registrar una venta dentro
+  de la misma transacción; no hay trigger ni columna de auditoría de
+  movimientos de stock.

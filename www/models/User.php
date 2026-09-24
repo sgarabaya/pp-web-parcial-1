@@ -70,6 +70,15 @@ abstract class User
         return $this->role;
     }
 
+    public function displayName(): string
+    {
+        return sprintf(
+            "%s.%s",
+            substr($this->getName(), 0, 1),
+            $this->getLastName(),
+        );
+    }
+
     protected function assertValidRole(string $role): void {}
 
     abstract public function canSee(string $page): bool;
@@ -118,7 +127,7 @@ abstract class User
         );
     }
 
-    // Select the proper subclass switching on the role
+    // Select the proper subclass depending on role
     private static function fromFields(
         string $id,
         string $name,
@@ -128,8 +137,8 @@ abstract class User
         string $passwordHash,
         DateTimeImmutable $created,
     ): self {
-        return match ($role) {
-            "ADMIN" => new Administrator(
+        if ($role === "ADMIN") {
+            return new Administrator(
                 id: $id,
                 name: $name,
                 lastName: $lastName,
@@ -137,17 +146,17 @@ abstract class User
                 passwordHash: $passwordHash,
                 role: $role,
                 created: $created,
-            ),
-            default => new Employee(
-                id: $id,
-                name: $name,
-                lastName: $lastName,
-                email: $email,
-                passwordHash: $passwordHash,
-                role: $role,
-                created: $created,
-            ),
-        };
+            );
+        }
+        return new Employee(
+            id: $id,
+            name: $name,
+            lastName: $lastName,
+            email: $email,
+            passwordHash: $passwordHash,
+            role: $role,
+            created: $created,
+        );
     }
 
     /** @return array<string, mixed> */
