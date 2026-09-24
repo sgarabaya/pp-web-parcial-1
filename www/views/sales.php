@@ -37,6 +37,7 @@ $repo = new SaleRepository();
                     <th>Monto</th>
                     <th>Cliente</th>
                     <th>Metodo de Pago</th>
+                    <th>Fecha</th>
                 </thead>
                 <tbody>
                     <?php foreach ($repo->fetchDetails() as $sale) { ?>
@@ -51,6 +52,11 @@ $repo = new SaleRepository();
                             <td><?= map_payment_method(
                                 $sale->paymentMethod,
                             ) ?></td>
+                            <td>
+                                <span class="pill">
+                                    <?= $sale->created->format("Y/m/d") ?>
+                                </span>
+                            </td>
                         </tr>
                      <?php } ?>
                 </tbody>

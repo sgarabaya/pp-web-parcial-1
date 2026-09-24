@@ -484,3 +484,8 @@ nav.sidebar a {
         transform: translateY(0);
     }
 }
+
+.stats-chart {
+    max-width: 250px;
+    max-height: 300px;
+}

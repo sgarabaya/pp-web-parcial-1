@@ -93,4 +93,25 @@ class SaleRepository extends Repository
 
         return array_map(fn($row) => SaleView::mapFrom((array) $row), $rows);
     }
+
+    /** @return mixed[] */
+    public function fetchSalesOverview(): array
+    {
+        $query = "
+            SELECT
+                U.id,
+                CONCAT(U.name, ' ', U.last_name)    AS `userName`,
+                COUNT(S.id)                         AS `salesCount`,
+                SUM(S.paid_amount)                  AS `totalAmount`
+            FROM Sales S
+            INNER JOIN Users U ON U.id = S.user_id
+            GROUP BY 1, 2;
+        ";
+
+        $stmt = Database::connect()->prepare($query);
+        $stmt->execute();
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        return array_map(fn($row) => (array) $row, $rows);
+    }
 }

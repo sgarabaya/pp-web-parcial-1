@@ -20,9 +20,11 @@ $stock_actual = MetricasDashboard::obtenerCantidadVehiculosDisponibles($db);
 require_once "components/header.php";
 require_once "components/navbar.php";
 navbar("OVERVIEW");
+
+$salesRepo = new SaleRepository();
 ?>
 
-<main>
+<main class="full-width max-height" style="overflow:scroll">
     <article class="full-width">
         <header>
             <h1>Panel de Control</h1>
@@ -70,6 +72,19 @@ navbar("OVERVIEW");
             </article>
         <?php endif; ?>
     </div>
+    <article class="full-width">
+        <header>
+            <h3>Estadisticas</h3>
+        </header>
+        <canvas class="stats-chart" id="sales-chart"></canvas>
+    </article>
 </main>
 
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js"></script>
+<script src="/public/charts.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', ()=> {
+    loadSalesOverview(<?= json_encode($salesRepo->fetchSalesOverview()) ?>);
+  });
+</script>
 <?php require_once "components/footer.php"; ?>

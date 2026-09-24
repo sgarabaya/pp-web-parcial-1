@@ -98,7 +98,7 @@ VALUES
 ;
 
 INSERT INTO Sales
-    (id, user_id, vehicle_id, paid_amount, client_name, client_contact, payment_method)
+    (id, user_id, vehicle_id, paid_amount, client_name, client_contact, payment_method, created)
 SELECT
     UUID(),
     (SELECT id FROM Users WHERE role = 'SALES' ORDER BY RAND() LIMIT 1),
@@ -106,6 +106,7 @@ SELECT
     ROUND(RAND() * 40000 + 10000, 2),
     client_name,
     client_contact,
-    ELT(FLOOR(RAND() * 4) + 1, 'CASH', 'FINANCED', 'EXCHANGE+CASH', 'EXCHANGE+FINANCED')
+    ELT(FLOOR(RAND() * 4) + 1, 'CASH', 'FINANCED', 'EXCHANGE+CASH', 'EXCHANGE+FINANCED'),
+    FROM_UNIXTIME(UNIX_TIMESTAMP('2024-01-01 00:00:00') + FLOOR(RAND() * (UNIX_TIMESTAMP(NOW()) - UNIX_TIMESTAMP('2024-01-01 00:00:00'))))
 FROM temp_clients
 ;
